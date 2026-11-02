@@ -5,5 +5,4 @@ dist
 # 本地 IDE / 设计过程产物
 .trae
 .trae-html-share-packages
-.oil-ui
 .screenshots
