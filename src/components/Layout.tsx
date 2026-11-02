@@ -1,7 +1,7 @@
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { useProgress } from './ProgressContext';
 import { dueCards } from '../lib/progress';
-import { VOCAB } from '../content/vocab';
+import { VOCAB_IDS } from '../content/vocab';
 import GhibliBackground from './GhibliBackground';
 
 const TABS = [
@@ -16,7 +16,7 @@ const TABS = [
 
 export default function Layout() {
   const { state } = useProgress();
-  const due = Math.min(dueCards(state, VOCAB.map((v) => v.id)).length, 20);
+  const due = Math.min(dueCards(state, VOCAB_IDS).length, 20);
   const location = useLocation();
 
   return (

@@ -902,6 +902,7 @@ export const SENTENCES: Sentence[] = [
   },
 ];
 
+export const SENTENCE_IDS: string[] = SENTENCES.map((s) => s.id);
 export const sentenceById: Map<string, Sentence> = new Map(SENTENCES.map((s) => [s.id, s]));
 
 export function sentencesOfLesson(lessonId: string): Sentence[] {

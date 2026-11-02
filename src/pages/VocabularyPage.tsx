@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { VOCAB } from '../content/vocab';
+import { VOCAB, VOCAB_IDS } from '../content/vocab';
 import { POS_LABEL, TAG_LABEL, TAG_COLOR, type VocabTag, type VocabItem } from '../content/types';
 import { useProgress } from '../components/ProgressContext';
 import { dueCards } from '../lib/progress';
@@ -80,7 +80,7 @@ export default function VocabularyPage() {
   }, [query, activeTags]);
 
   const dueCount = useMemo(
-    () => Math.min(dueCards(state, VOCAB.map((v) => v.id)).length, 20),
+    () => Math.min(dueCards(state, VOCAB_IDS).length, 20),
     [state],
   );
 
