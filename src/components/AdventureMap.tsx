@@ -191,7 +191,7 @@ export default function AdventureMap() {
       {nodes.map(({ unit, done, total, st, x, y, i }) => (
         <Link
           key={unit.id}
-          to={`/lesson/${unit.lessonIds[0]}`}
+          to={`/unit/${unit.id}`}
           role="listitem"
           className={`map-node node-${st}`}
           style={{ left: (x / MAP_W) * 100 + '%', top: (y / MAP_H) * 100 + '%', animationDelay: `${i * 90}ms` }}

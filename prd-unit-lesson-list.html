@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD｜单元课程列表与自由选课</title>
+<style>
+  :root {
+    --bg: #FBF3E4;
+    --card: #FFFDF6;
+    --ink: #2A2118;
+    --ink-soft: #6B5E50;
+    --line: #E4D8C6;
+    --orange: #E8632B;
+    --orange-soft: #FBE3D6;
+    --teal: #2E7D77;
+    --teal-soft: #DDF0EC;
+    --yellow: #F6D46B;
+    --yellow-soft: #FCF3D3;
+    --ok: #3E8E5A;
+    --ok-soft: #DFF1E4;
+    --r: 14px;
+    --shadow: 0 2px 0 rgba(42, 33, 24, 0.08);
+    --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  a { color: var(--teal); }
+  .page { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .doc-head { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 32px 34px; box-shadow: var(--shadow); margin-bottom: 40px; }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--orange); text-transform: uppercase; }
+  .kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+  h1 { font-size: 32px; line-height: 1.3; margin: 10px 0 14px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--ink-soft); font-size: 15px; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .meta-item { font-size: 12.5px; background: var(--yellow-soft); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
+  .meta-item strong { color: var(--ink-soft); font-weight: 700; margin-right: 6px; }
+
+  section { margin-bottom: 48px; }
+  h2 { font-size: 22px; margin: 0 0 18px; padding-left: 14px; border-left: 5px solid var(--orange); line-height: 1.3; }
+  h2 .no { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 10px; border-radius: 50%; background: var(--orange); color: #FFFDF6; font-size: 13px; vertical-align: 2px; }
+  h3 { font-size: 16.5px; margin: 26px 0 10px; }
+  h3:first-of-type { margin-top: 0; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 15px; color: var(--ink-soft); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 20px 22px; box-shadow: var(--shadow); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  .muted { color: var(--ink-soft); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; vertical-align: 1px; }
+  .tag-p0 { background: var(--orange-soft); color: var(--orange); }
+  .tag-p1 { background: var(--teal-soft); color: var(--teal); }
+  .tag-p2 { background: #EDE7DC; color: #7C6E5E; }
+  .tag-out { background: #EDE7DC; color: #7C6E5E; }
+  .tag-tbd { background: var(--yellow); color: #6A5314; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; font-size: 14px; margin: 12px 0 18px; }
+  th, td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--orange-soft); font-size: 13px; font-weight: 800; color: #8A3D1A; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td code, p code, li code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; background: #F4EBDB; border-radius: 5px; padding: 1px 5px; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 4px; }
+  .flow-node { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 15px; font-size: 13.5px; font-weight: 700; box-shadow: var(--shadow); }
+  .flow-node.unit { border-color: var(--teal); background: var(--teal-soft); }
+  .flow-node.lesson { border-color: var(--orange); background: var(--orange-soft); }
+  .flow-node.done { border-color: var(--ok); background: var(--ok-soft); }
+  .flow-arrow { color: var(--ink-soft); font-size: 16px; }
+  .flow-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; }
+
+  .block-list { display: grid; gap: 10px; margin: 4px 0 16px; }
+  .block { border: 1px solid var(--line); border-radius: 11px; padding: 12px 15px; background: var(--card); }
+  .block-head { font-size: 13.5px; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .block-head .n { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 50%; background: var(--orange); color: #FFFDF6; font-size: 12px; }
+  .block p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  .callout { border-left: 4px solid var(--teal); background: var(--teal-soft); border-radius: 0 10px 10px 0; padding: 14px 16px; font-size: 13.5px; margin: 14px 0; }
+  .callout.warn { border-left-color: #C98A2C; background: var(--yellow-soft); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .callout p:last-child { margin: 0; }
+
+  /* 课程卡片示意 */
+  .lesson-demo { display: grid; gap: 10px; margin: 10px 0 6px; }
+  .lesson-row { display: flex; gap: 14px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; box-shadow: var(--shadow); }
+  .lesson-row.recommend { border-color: var(--orange); background: var(--orange-soft); }
+  .lesson-row .num { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; border-radius: 50%; background: var(--paper, #F4EBDB); font-weight: 800; font-size: 13px; }
+  .lesson-row.recommend .num { background: var(--orange); color: #FFFDF6; }
+  .lesson-row .body { flex: 1; min-width: 0; }
+  .lesson-row .name { font-weight: 800; font-size: 15px; }
+  .lesson-row .meta-line { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .lesson-row .state { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
+  .lesson-row .state.todo { background: var(--yellow-soft); color: #8A6A1C; }
+
+  .doc-foot { border-top: 1px solid var(--line); margin-top: 56px; padding-top: 18px; font-size: 12.5px; color: var(--ink-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  @media print { body { background: #fff; } .page { max-width: none; padding: 0; } .card, table, .doc-head, .lesson-row { box-shadow: none; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <span class="kicker">Product Requirements Document</span>
+    <h1>单元页：先看课程列表，再自由选择学习</h1>
+    <p class="subtitle">把「点单元直接跳第一课」改为「进入单元页 → 浏览本单元全部课程 → 自由选择任意一课开始」，并在文末给出课程设计的进一步优化建议。</p>
+    <div class="meta">
+      <span class="meta-item"><strong>版本</strong>v0.1 草案</span>
+      <span class="meta-item"><strong>日期</strong>2026-11-02</span>
+      <span class="meta-item"><strong>负责人</strong>[TBD]</span>
+      <span class="meta-item"><strong>涉及模块</strong>课程地图、单元页、课程详情入口</span>
+      <span class="meta-item"><strong>文档类型</strong>常规 PRD（功能迭代）</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="no">1</span>背景与目标</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>现在的问题</h3>
+        <p>课程地图上的「单元详情」卡片和冒险地图里的单元节点，点击后都<strong>直接跳进该单元的第一门待学课程</strong>。学习者看不到这个单元一共有几课、每课讲什么，也无法选择自己更想先学的那一课。</p>
+        <p>对自学用户来说，这等于把「单元」变成了一个不透明的快捷入口：想重学某一课，只能靠课程详情页的上一课 / 下一课按钮绕回去。</p>
+      </div>
+      <div class="card">
+        <h3>期望的结果</h3>
+        <p>点击任意单元后，先进入<strong>单元页</strong>，看到本单元全部课程及各自的主题、内容量和完成状态；学习者可以<strong>自由点击任意一课</strong>进入学习页，不需要按顺序解锁。</p>
+        <p>单元页同时保留一个「推荐下一课」的默认入口，让不想做选择的人一键继续。</p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>产品判断</strong>
+      <p>「自由选择」指所有课程都可直接进入，不设解锁门槛。自由不等于无引导：单元页默认高亮本单元第一门未完成课程，作为推荐起点。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">2</span>范围</h2>
+    <table>
+      <thead>
+        <tr><th>优先级</th><th>内容</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>新增单元页 <code>/unit/:unitId</code></td>
+          <td>展示单元标题、简介、进度与本单元课程列表。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>课程列表与自由选择</td>
+          <td>每门课显示序号、标题、主题、词汇 / 句子 / 题量、完成状态；任意一课可点击进入学习页。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>入口改造</td>
+          <td>课程地图的单元卡片、冒险地图的单元节点改为进入单元页，不再直达第一课。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>完成回流</td>
+          <td>练习页完成后同时提供「下一课」与「返回本单元课程列表」。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td>推荐下一课标记</td>
+          <td>单元页高亮第一门未完成课程，并给出「从这里继续」按钮。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-out">不做</span></td>
+          <td>解锁 / 前置条件</td>
+          <td>课程不设任何顺序门槛，已完成课程也可随时重学。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-out">不做</span></td>
+          <td>课程内容与题库</td>
+          <td>只改展示与入口，不新增、不改写课程内容。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">3</span>产品模型与核心流程</h2>
+
+    <h3>3.1 对象与路由</h3>
+    <table>
+      <thead>
+        <tr><th>对象 / 路由</th><th>定义</th><th>关键字段</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Unit</code></td>
+          <td>单元，包含若干门按顺序排列的课程。</td>
+          <td>级别、序号、标题、简介、课程 ID 列表</td>
+        </tr>
+        <tr>
+          <td><code>Lesson</code></td>
+          <td>单元内的一门课。</td>
+          <td>序号、标题、目标、词汇量、句子量、题量、完成状态</td>
+        </tr>
+        <tr>
+          <td><code>/learn</code></td>
+          <td>课程地图：全部单元的总览入口。</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>/unit/:unitId</code></td>
+          <td>单元页：本单元课程列表与单元进度。</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>/lesson/:lessonId</code></td>
+          <td>学习页（已上线），由单元页进入。</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 核心流程</h3>
+    <div class="card">
+      <div class="flow">
+        <span class="flow-node">课程地图 / 冒险地图</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node unit">单元页</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node lesson">任选一课 · 学习页</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node lesson">练习页</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node done">完成本课</span>
+      </div>
+      <p class="flow-note">完成本课后可选择「下一课」继续，或「返回本单元」重新选课；课程列表中的任意一课都可直接进入。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">4</span>功能需求</h2>
+
+    <h3>FR-01 单元页</h3>
+    <span class="tag tag-p0">P0</span>
+    <p class="muted">路由 <code>/unit/:unitId</code>；目标是在一个页面里完整回答「这个单元有哪些课、我该学哪一课」。</p>
+
+    <div class="block-list">
+      <div class="block">
+        <div class="block-head"><span class="n">1</span>页面头部</div>
+        <p>返回课程地图；级别与单元序号；单元标题与简介；单元完成进度（已完成课程数 / 总课程数）与进度条。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">2</span>推荐继续</div>
+        <p>当单元内存在未完成课程时，显示「从这里继续：第 N 课 · 课程标题 →」，点击进入该课学习页。全部完成时改为「本单元已全部完成」状态。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">3</span>课程列表</div>
+        <p>按课程顺序列出本单元全部课程。每行是一个课程卡片，包含序号、标题、主题摘要、内容量、完成状态，并可整行点击进入学习页。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">4</span>单元底部</div>
+        <p>上一单元 / 下一单元导航，方便跨单元浏览；不提供「一键学完本单元」这类批量入口。</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>规则项</th><th>行为</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>单元不存在</td><td>重定向到课程地图 <code>/learn</code>。</td></tr>
+        <tr><td>单元内无课程</td><td>显示空状态「这个单元还没有课程」，并保留返回课程地图入口。</td></tr>
+        <tr><td>完成状态</td><td>沿用现有已完成记录：课程 ID 在已完成列表中即显示「已完成」，否则显示「未开始」。</td></tr>
+        <tr><td>推荐规则</td><td>取单元内顺序第一门未完成课程；全部完成时不显示推荐按钮。</td></tr>
+        <tr><td>自由选择</td><td>不校验任何前置课程，任意课程卡片都可进入；已完成课程同样可进入重学。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>FR-02 课程卡片</h3>
+    <span class="tag tag-p0">P0</span>
+    <p class="muted">卡片需要让学习者在不点进去的情况下判断「这课讲什么、有多长、我学没学过」。</p>
+
+    <div class="lesson-demo">
+      <div class="lesson-row recommend">
+        <span class="num">01</span>
+        <div class="body">
+          <div class="name">29 个字母</div>
+          <div class="meta-line">认识 29 个字母 · 词汇 5 · 句子 3 · 练习 5</div>
+        </div>
+        <span class="state todo">未开始 · 从这里继续</span>
+      </div>
+      <div class="lesson-row">
+        <span class="num">02</span>
+        <div class="body">
+          <div class="name">六个声调</div>
+          <div class="meta-line">分辨 6 个声调 · 词汇 5 · 句子 3 · 练习 5</div>
+        </div>
+        <span class="state">已完成 ✓</span>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>字段</th><th>来源 / 规则</th><th>展示</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>序号</td><td>课程在单元内的顺序</td><td>两位数圆形徽章</td></tr>
+        <tr><td>标题</td><td>课程标题</td><td>主文案，加粗</td></tr>
+        <tr><td>主题摘要</td><td>取本课目标的第一条，或课程标题的补充说明</td><td>单行，超长省略</td></tr>
+        <tr><td>内容量</td><td>词汇数、句子数、练习数（句子练习 + 课文练习）</td><td>「词汇 5 · 句子 3 · 练习 5」</td></tr>
+        <tr><td>完成状态</td><td>已完成记录</td><td>「已完成 ✓」或「未开始」</td></tr>
+        <tr><td>推荐标记</td><td>第一门未完成课程</td><td>整行浅橙底色 + 「从这里继续」</td></tr>
+      </tbody>
+    </table>
+
+    <h3>FR-03 入口改造</h3>
+    <span class="tag tag-p0">P0</span>
+    <table>
+      <thead>
+        <tr><th>位置</th><th>现状</th><th>改动后</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>课程地图 · 单元详情卡片</td><td>直达第一门待学课程</td><td>进入 <code>/unit/:unitId</code></td></tr>
+        <tr><td>课程地图 · 冒险地图单元节点</td><td>直达第一门课程</td><td>进入 <code>/unit/:unitId</code></td></tr>
+        <tr><td>单元页 · 课程卡片</td><td>—</td><td>进入该课学习页</td></tr>
+        <tr><td>首页 · 继续学习 / 今日任务</td><td>直达下一课学习页</td><td>保持不变，直接继续，不经过单元页</td></tr>
+        <tr><td>学习页 · 返回</td><td>返回课程地图</td><td>返回本课所属单元页</td></tr>
+        <tr><td>练习页 · 返回学习</td><td>返回本课学习页</td><td>保持不变</td></tr>
+      </tbody>
+    </table>
+
+    <h3>FR-04 完成回流</h3>
+    <span class="tag tag-p0">P0</span>
+    <table>
+      <thead>
+        <tr><th>场景</th><th>行为</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>完成本课后</td><td>提供两个入口：「下一课：标题 →」与「返回本单元」；下一课不存在时只保留「返回本单元」。</td></tr>
+        <tr><td>单元最后一课完成</td><td>「返回本单元」为主按钮，单元页显示「本单元已全部完成」。</td></tr>
+        <tr><td>学习页顶部返回</td><td>「← 返回单元」回到本课所属单元页，而不是课程地图。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">5</span>共享规则与异常</h2>
+    <table>
+      <thead>
+        <tr><th>规则</th><th>定义</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>课程顺序</td><td>单元内课程仍按既有顺序展示与推荐，但顺序只影响展示，不影响进入权限。</td></tr>
+        <tr><td>状态口径</td><td>课程只有「未开始 / 已完成」两种状态，不新增「学习中」等未持久化的状态。</td></tr>
+        <tr><td>数量口径</td><td>词汇 = 本课词汇数；句子 = 本课句子数；练习 = 句子练习与课文练习总题量，与练习页顶部一致。</td></tr>
+        <tr><td>入口一致</td><td>所有进入课程详情的入口统一先到学习页，再进入练习页，不直接跳练习页。</td></tr>
+        <tr><td>返回链路</td><td>单元页 → 学习页 → 练习页，返回时逐级回退，不出现跳回课程地图的断层。</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>回归检查点</strong>
+      <p>首页「继续学习」仍能直达下一课；单元页与冒险地图的单元节点都能进入单元页；单元页课程卡片的状态与课程地图进度一致；已完成课程可重复进入学习页与练习页。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">6</span>课程设计的进一步优化建议</h2>
+    <p class="lead">以下为本轮之外的建议，供后续排期参考；括号内为建议优先级。</p>
+    <table>
+      <thead>
+        <tr><th>优先级</th><th>建议</th><th>解决什么问题</th><th>可观察的结果</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td>练习进度持久化</td>
+          <td>自由选课后学习者更容易中途退出；现在刷新就丢失全部作答。</td>
+          <td>刷新或返回后恢复已答题目与当前得分，并提供「重新开始」入口。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td>错题回看与复习联动</td>
+          <td>答错时只看一次解析，之后无法再定位；错题与句子复习系统彼此独立。</td>
+          <td>练习结束提供「错题回看」，错题可一键加入复习队列。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td>单元级学习目标</td>
+          <td>单元页只有标题和简介，学习者不知道这个单元整体要掌握什么、课程之间如何递进。</td>
+          <td>单元头部展示「本单元你会学到」：3–5 条能力或语法点，来自现有课程目标汇总。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td>今日任务适配自由选课</td>
+          <td>今日任务目前固定为「学 1 新课」，自由选择后可能与实际学习行为不一致。</td>
+          <td>任意一课完成都计入今日任务；今日任务可展示「今天学了哪一课」。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td>单元完成回顾页</td>
+          <td>学完一个单元缺少阶段性收束，只有课程地图上的进度条变化。</td>
+          <td>单元全部完成时展示本单元掌握情况与下一单元入口。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td>课程列表筛选与搜索</td>
+          <td>单元与课程增多后，按顺序翻找某一主题会变慢。</td>
+          <td>课程地图支持按级别、主题词或完成状态筛选，并可直接定位课程。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>不建议现在做</strong>
+      <p>课程解锁门槛、学习时长估算、强制学习顺序。这三类设计会与「自由选择」直接冲突，也会给自学用户增加摩擦。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">7</span>待确认问题</h2>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>问题</th><th>当前处理</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Q-01</td>
+          <td>冒险地图的单元节点是否也要改为进入单元页？</td>
+          <td><span class="tag tag-tbd">TBD</span> 默认按本 PRD 处理：与课程地图单元卡片一致，进入单元页。</td>
+        </tr>
+        <tr>
+          <td>Q-02</td>
+          <td>单元页的课程数量上限与每行信息密度？</td>
+          <td><span class="tag tag-tbd">TBD</span> 单单元课程数增多时，课程卡片改为单列纵向列表；暂不引入分页。</td>
+        </tr>
+        <tr>
+          <td>Q-03</td>
+          <td>学习页「返回」的目标是否统一为单元页？</td>
+          <td><span class="tag tag-tbd">TBD</span> 默认统一为单元页；若学习者从首页进入，返回单元页仍能定位上下文。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="doc-foot">
+    <span>越语学堂 · 单元课程列表与自由选课</span>
+    <span>v0.1 草案 · 2026-11-02</span>
+  </footer>
+
+</div>
+</body>
+</html>

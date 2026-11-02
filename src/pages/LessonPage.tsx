@@ -2,12 +2,15 @@ import { useState, useRef } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { lessonById, unitOfLesson, getNextLesson, getPrevLesson } from '../content/curriculum';
 import { vocabById } from '../content/vocab';
-import { POS_LABEL, type Exercise, type Dialogue, type VocabItem } from '../content/types';
+import { exercisesOfLesson } from '../content/sentences';
+import { POS_LABEL, type Dialogue, type VocabItem } from '../content/types';
 import { useProgress } from '../components/ProgressContext';
-import { checkFill } from '../lib/quiz';
 import { speak, stopSpeaking } from '../lib/speech';
 import SpeakButton, { type SpeakButtonHandle } from '../components/SpeakButton';
 import SentenceSection from '../components/SentenceSection';
+
+/** 词汇默认只展示前 18 个，超出后折叠，避免上百个词把页面拉得过长 */
+const VOCAB_PREVIEW = 18;
 
 function VocabRow({ v }: { v: VocabItem }) {
   const speakRef = useRef<SpeakButtonHandle>(null);
@@ -44,96 +47,12 @@ function VocabRow({ v }: { v: VocabItem }) {
   );
 }
 
-function ChoiceExercise({ ex, onResult }: { ex: Extract<Exercise, { type: 'choice' }>; onResult: (ok: boolean) => void }) {
-  const [picked, setPicked] = useState<number | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const ok = submitted && picked === ex.answer;
-
-  return (
-    <div className="card mb16" style={submitted ? { background: ok ? 'var(--ok-bg)' : 'var(--err-bg)' } : {}}>
-      <div className="flex gap12 mb12">
-        {ex.audioText && <SpeakButton text={ex.audioText} />}
-        <div style={{ fontWeight: 700, fontSize: 16 }}>{ex.prompt}</div>
-      </div>
-      <div className="flex gap12 wrap mb12">
-        {ex.options.map((opt, i) => {
-          let bg = 'var(--card)';
-          if (submitted && i === ex.answer) bg = 'var(--ok-bg)';
-          else if (submitted && i === picked && i !== ex.answer) bg = 'var(--err-bg)';
-          else if (picked === i) bg = 'var(--orange-soft)';
-          return (
-            <button
-              key={i}
-              className="btn btn-sm"
-              style={{ background: bg, minWidth: 90 }}
-              disabled={submitted}
-              onClick={() => setPicked(i)}
-            >
-              {opt}
-            </button>
-          );
-        })}
-      </div>
-      {!submitted ? (
-        <button className="btn btn-primary btn-sm" disabled={picked === null} onClick={() => { setSubmitted(true); onResult(picked === ex.answer); }}>
-          提交
-        </button>
-      ) : (
-        <div className="anim-pop">
-          <strong style={{ color: ok ? 'var(--ok)' : 'var(--err)' }}>{ok ? '✓ 答对了' : '✗ 再想想'}</strong>
-          {ex.explain && <p className="muted mt8" style={{ fontSize: 14 }}>{ex.explain}</p>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FillExercise({ ex, onResult }: { ex: Extract<Exercise, { type: 'fill' }>; onResult: (ok: boolean) => void }) {
-  const [value, setValue] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [hintShown, setHintShown] = useState(false);
-  const ok = submitted && checkFill(value, ex.answer, ex.accept);
-
-  return (
-    <div className="card mb16" style={submitted ? { background: ok ? 'var(--ok-bg)' : 'var(--err-bg)' } : {}}>
-      <div className="flex gap12 mb12">
-        <div style={{ fontWeight: 700, fontSize: 16 }}>{ex.prompt}</div>
-      </div>
-      <div className="flex gap12 wrap mb12">
-        <input
-          value={value}
-          disabled={submitted}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && value.trim() && !submitted) { setSubmitted(true); onResult(checkFill(value, ex.answer, ex.accept)); } }}
-          placeholder="输入答案…"
-          style={{ padding: '10px 14px', border: 'var(--bd-thin)', borderRadius: 10, minWidth: 220, background: 'var(--card)' }}
-        />
-        {ex.hint && !submitted && (
-          <button className="btn btn-sm" onClick={() => setHintShown(true)}>提示</button>
-        )}
-      </div>
-      {hintShown && ex.hint && <p className="muted mb8" style={{ fontSize: 13 }}>提示：{ex.hint}</p>}
-      {!submitted ? (
-        <button className="btn btn-primary btn-sm" disabled={!value.trim()} onClick={() => { setSubmitted(true); onResult(checkFill(value, ex.answer, ex.accept)); }}>
-          提交
-        </button>
-      ) : (
-        <div className="anim-pop">
-          <strong style={{ color: ok ? 'var(--ok)' : 'var(--err)' }}>{ok ? '✓ 答对了' : `✗ 正确答案：${ex.answer}`}</strong>
-          {ex.explain && <p className="muted mt8" style={{ fontSize: 14 }}>{ex.explain}</p>}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
-  const { state, complete, score } = useProgress();
+  const { state } = useProgress();
   const lesson = lessonId ? lessonById.get(lessonId) : undefined;
   const [showZh, setShowZh] = useState(false);
-  const [answered, setAnswered] = useState<boolean[]>([]);
-  const [finished, setFinished] = useState(false);
+  const [showAllVocab, setShowAllVocab] = useState(false);
   const [playingDlg, setPlayingDlg] = useState<string | null>(null);
   const dlgTokenRef = useRef(0);
 
@@ -141,22 +60,8 @@ export default function LessonPage() {
   const unit = unitOfLesson(lesson)!;
   const next = getNextLesson(lesson.id);
   const prev = getPrevLesson(lesson.id);
-  const allAnswered = answered.length === lesson.exercises.length;
-  const correctCount = answered.filter(Boolean).length;
   const isDone = state.completedLessons.includes(lesson.id);
-
-  const handleResult = (ok: boolean) => {
-    const nextAnswers = [...answered, ok];
-    setAnswered(nextAnswers);
-    if (nextAnswers.length === lesson.exercises.length) {
-      score(lesson.id, { correct: nextAnswers.filter(Boolean).length, total: lesson.exercises.length, at: Date.now() });
-    }
-  };
-
-  const handleComplete = () => {
-    complete(lesson.id);
-    setFinished(true);
-  };
+  const practiceCount = exercisesOfLesson(lesson.id).length + lesson.exercises.length;
 
   const handlePlayDialogue = async (d: Dialogue) => {
     // 正在播放同一段：停止
@@ -179,7 +84,7 @@ export default function LessonPage() {
     <div className="container" style={{ paddingTop: 28, paddingBottom: 60 }}>
       {/* 头部 */}
       <div className="mb16">
-        <Link to="/learn" className="muted" style={{ fontSize: 14 }}>← 返回课程地图</Link>
+        <Link to={`/unit/${unit.id}`} className="muted" style={{ fontSize: 14 }}>← 返回单元</Link>
       </div>
       <div className="flex spread wrap gap12 mb16">
         <div>
@@ -195,14 +100,27 @@ export default function LessonPage() {
       {/* 词汇 */}
       <section className="section">
         <div className="section-head">
-          <h2>词汇 · {lesson.vocabIds.length} 个</h2>
+          <h2>词汇</h2>
+          <span className="badge-num" style={{ minWidth: 28, height: 28, fontSize: 14 }}>{lesson.vocabIds.length}</span>
         </div>
-        <div className="stagger" style={{ display: 'grid', gap: 12 }}>
-          {lesson.vocabIds.map((vid) => <VocabRow key={vid} v={vocabById.get(vid)!} />)}
+        <div
+          className="stagger"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}
+        >
+          {(showAllVocab ? lesson.vocabIds : lesson.vocabIds.slice(0, VOCAB_PREVIEW)).map((vid) => (
+            <VocabRow key={vid} v={vocabById.get(vid)!} />
+          ))}
         </div>
+        {lesson.vocabIds.length > VOCAB_PREVIEW && (
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button className="btn btn-sm" onClick={() => setShowAllVocab((v) => !v)}>
+              {showAllVocab ? '收起词汇 ↑' : `展开全部 ${lesson.vocabIds.length} 个词 ↓`}
+            </button>
+          </div>
+        )}
       </section>
 
-      {/* 句子 */}
+      {/* 句子（仅学习，不含练习） */}
       <SentenceSection lessonId={lesson.id} />
 
       {/* 语法 */}
@@ -292,43 +210,29 @@ export default function LessonPage() {
         </section>
       )}
 
-      {/* 练习 */}
+      {/* 去练习 */}
       <section className="section">
-        <div className="section-head spread">
-          <h2>练习 · {lesson.exercises.length} 题</h2>
-          <span className="chip">已答 {answered.length}/{lesson.exercises.length}</span>
-        </div>
-        {lesson.exercises.map((ex) =>
-          ex.type === 'choice'
-            ? <ChoiceExercise key={ex.id} ex={ex} onResult={handleResult} />
-            : <FillExercise key={ex.id} ex={ex} onResult={handleResult} />
-        )}
-        {allAnswered && (
-          <div className="card anim-pop" style={{ background: correctCount === lesson.exercises.length ? 'var(--ok-bg)' : 'var(--yellow-glow)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
-              得分 {correctCount} / {lesson.exercises.length}
+        <div className="card" style={{ background: 'var(--teal-soft)', display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 320px' }}>
+            <div style={{ fontWeight: 800, fontSize: 18 }}>学完了？去练习巩固一下</div>
+            <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+              {practiceCount > 0
+                ? `本课共 ${practiceCount} 题：句子练习 + 课文练习，集中在练习页一次完成。`
+                : '本课暂无练习题。'}
             </div>
-            <p className="muted mb16">
-              {correctCount === lesson.exercises.length ? '满分！发音肌肉已就位。' : '错题回看一下解析，再继续。'}
-            </p>
-            {!isDone && !finished && (
-              <button className="btn btn-primary" onClick={handleComplete}>
-                完成本课，盖章打卡 ✓
-              </button>
-            )}
-            {(isDone || finished) && next && (
-              <Link to={`/lesson/${next.id}`} className="btn btn-primary">
-                下一课：{next.title} →
-              </Link>
-            )}
           </div>
-        )}
+          {practiceCount > 0 && (
+            <Link to={`/lesson/${lesson.id}/practice`} className="btn btn-primary" style={{ fontSize: 17 }}>
+              {isDone ? '再练一次' : '去练习'} · {practiceCount} 题 →
+            </Link>
+          )}
+        </div>
       </section>
 
       {/* 上下课导航 */}
       <div className="flex spread mt24">
         {prev ? <Link to={`/lesson/${prev.id}`} className="btn btn-sm">← {prev.title}</Link> : <span />}
-        {next && (isDone || finished) ? <Link to={`/lesson/${next.id}`} className="btn btn-sm btn-primary">{next.title} →</Link> : <span />}
+        {next && isDone ? <Link to={`/lesson/${next.id}`} className="btn btn-sm btn-primary">{next.title} →</Link> : <span />}
       </div>
     </div>
   );

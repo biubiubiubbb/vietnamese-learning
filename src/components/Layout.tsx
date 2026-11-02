@@ -33,7 +33,8 @@ export default function Layout() {
             </span>
             <span>
               <span className="logo-text">越语学堂</span>
-              <span className="logo-sub">河内音 · 从六个声调开始</span>
+              {/* 未登录时显示「游客」，接入登录后替换为当前用户名 */}
+              <span className="logo-sub">游客</span>
             </span>
           </Link>
           <nav className="nav-tabs" aria-label="主导航">

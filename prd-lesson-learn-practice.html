@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD｜课程详情拆分为学习页与练习页</title>
+<style>
+  :root {
+    --bg: #FBF3E4;
+    --card: #FFFDF6;
+    --ink: #2A2118;
+    --ink-soft: #6B5E50;
+    --line: #E4D8C6;
+    --orange: #E8632B;
+    --orange-soft: #FBE3D6;
+    --teal: #2E7D77;
+    --teal-soft: #DDF0EC;
+    --yellow: #F6D46B;
+    --yellow-soft: #FCF3D3;
+    --ok: #3E8E5A;
+    --ok-soft: #DFF1E4;
+    --r: 14px;
+    --shadow: 0 2px 0 rgba(42, 33, 24, 0.08);
+    --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--teal); }
+  .page { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ---------- 文档头 ---------- */
+  .doc-head {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px 34px;
+    box-shadow: var(--shadow);
+    margin-bottom: 40px;
+  }
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--orange);
+    text-transform: uppercase;
+  }
+  .kicker::before {
+    content: "";
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--orange);
+  }
+  h1 {
+    font-size: 32px;
+    line-height: 1.3;
+    margin: 10px 0 14px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--ink-soft); font-size: 15px; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .meta-item {
+    font-size: 12.5px;
+    background: var(--yellow-soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 13px;
+  }
+  .meta-item strong { color: var(--ink-soft); font-weight: 700; margin-right: 6px; }
+
+  /* ---------- 章节 ---------- */
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 22px;
+    margin: 0 0 18px;
+    padding-left: 14px;
+    border-left: 5px solid var(--orange);
+    line-height: 1.3;
+  }
+  h2 .no {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; margin-right: 10px;
+    border-radius: 50%; background: var(--orange); color: #FFFDF6;
+    font-size: 13px; vertical-align: 2px;
+  }
+  h3 { font-size: 16.5px; margin: 26px 0 10px; }
+  h3:first-of-type { margin-top: 0; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 15px; color: var(--ink-soft); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  .muted { color: var(--ink-soft); }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 999px;
+    vertical-align: 1px;
+  }
+  .tag-p0 { background: var(--orange-soft); color: var(--orange); }
+  .tag-p1 { background: var(--teal-soft); color: var(--teal); }
+  .tag-out { background: #EDE7DC; color: #7C6E5E; }
+  .tag-tbd { background: var(--yellow); color: #6A5314; }
+
+  /* ---------- 表格 ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    font-size: 14px;
+    margin: 12px 0 18px;
+  }
+  th, td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--orange-soft); font-size: 13px; font-weight: 800; color: #8A3D1A; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td code, p code, li code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 12.5px;
+    background: #F4EBDB;
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- 流程 ---------- */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 4px;
+  }
+  .flow-node {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 15px;
+    font-size: 13.5px;
+    font-weight: 700;
+    box-shadow: var(--shadow);
+  }
+  .flow-node.learn { border-color: var(--teal); background: var(--teal-soft); }
+  .flow-node.practice { border-color: var(--orange); background: var(--orange-soft); }
+  .flow-node.done { border-color: var(--ok); background: var(--ok-soft); }
+  .flow-arrow { color: var(--ink-soft); font-size: 16px; }
+  .flow-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; }
+
+  /* ---------- 线框对比 ---------- */
+  .wire { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .wire { grid-template-columns: 1fr; } }
+  .wire-col-title { font-size: 13px; font-weight: 800; margin-bottom: 8px; }
+  .wire-col-title.now { color: #A56A4B; }
+  .wire-col-title.next { color: var(--teal); }
+  .wire-box {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+  }
+  .wire-row {
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    margin-bottom: 6px;
+    border: 1px dashed var(--line);
+    background: #FAF6EC;
+  }
+  .wire-row:last-child { margin-bottom: 0; }
+  .wire-row.learn { border-style: solid; border-color: #BBDDD8; background: var(--teal-soft); }
+  .wire-row.practice { border-style: solid; border-color: #F0BFA6; background: var(--orange-soft); }
+  .wire-row.mixed { border-color: #D8B34A; background: var(--yellow-soft); }
+  .wire-label { font-size: 11px; color: var(--ink-soft); margin: 6px 0 10px; }
+
+  /* ---------- 结构块 ---------- */
+  .block-list { display: grid; gap: 10px; margin: 4px 0 16px; }
+  .block {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 12px 15px;
+    background: var(--card);
+  }
+  .block-head {
+    font-size: 13.5px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .block-head .n {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 5px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: #FFFDF6;
+    font-size: 12px;
+  }
+  .block p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  .callout {
+    border-left: 4px solid var(--teal);
+    background: var(--teal-soft);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    margin: 14px 0;
+  }
+  .callout.warn { border-left-color: #C98A2C; background: var(--yellow-soft); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .callout p:last-child { margin: 0; }
+
+  /* ---------- 页脚 ---------- */
+  .doc-foot {
+    border-top: 1px solid var(--line);
+    margin-top: 56px;
+    padding-top: 18px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { max-width: none; padding: 0; }
+    .card, table, .doc-head { box-shadow: none; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <span class="kicker">Product Requirements Document</span>
+    <h1>课程详情拆分为「学习页」与「练习页」</h1>
+    <p class="subtitle">把「学一个练一个」的长页结构改为「先完整学习、再集中练习」，学习与练习各自成为独立页面。</p>
+    <div class="meta">
+      <span class="meta-item"><strong>版本</strong>v0.1 草案</span>
+      <span class="meta-item"><strong>日期</strong>2026-11-02</span>
+      <span class="meta-item"><strong>负责人</strong>[TBD]</span>
+      <span class="meta-item"><strong>涉及模块</strong>课程详情、课程地图、首页入口</span>
+      <span class="meta-item"><strong>文档类型</strong>常规 PRD（功能迭代）</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="no">1</span>背景与目标</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>现在的问题</h3>
+        <p>课程详情是一个长页面：<strong>词汇 → 句子 → 句子练习 → 语法 → 对话 → 课文练习</strong>。其中「句子练习」被嵌在句子板块内部，学习者刚读完几个句子就被要求做题，节奏变成「学一个、练一个」。</p>
+        <p>整页唯一的集中练习区又压在页面最底部，课程内容一多，学习者需要长距离滚动才能找到练习；页面缺少「学习区 / 练习区」的边界。</p>
+      </div>
+      <div class="card">
+        <h3>期望的结果</h3>
+        <p>学习者进入一门课时，先看到<strong>完整、连续、不打断</strong>的学习内容，页面里不出现任何作答控件；学完后通过一个明确入口进入<strong>练习页</strong>，本课所有题目集中在一处完成。</p>
+        <p>练习不强制要求先学完，复习时可以直接进入练习页。</p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>产品判断</strong>
+      <p>采用「独立页面」而不是同页分区，是本次需求明确的选择：学习与练习拥有各自的路由、各自的页面目标，避免练习入口再次被长页内容掩埋。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">2</span>范围</h2>
+    <p class="lead">本次只调整课程详情的信息架构与入口，不新增、不改写任何课程内容。</p>
+
+    <table>
+      <thead>
+        <tr><th>优先级</th><th>内容</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>学习页 <code>/lesson/:lessonId</code></td>
+          <td>承载词汇、句子、语法、对话；移除页面内全部作答控件。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>练习页 <code>/lesson/:lessonId/practice</code></td>
+          <td>集中承载本课的「句子练习」与「课文练习」，承担完成本课的盖章动作。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>两页互跳与课程完成流转</td>
+          <td>学习页底部进入练习；练习页顶部返回学习；完成后进入下一课学习页。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td>既有入口改造</td>
+          <td>首页、课程地图、上下课导航、今日任务全部指向学习页。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td>练习作答进度持久化</td>
+          <td>刷新或返回后恢复已答题目与得分，而不是重新作答。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-out">不做</span></td>
+          <td>全局练习页 <code>/practice</code></td>
+          <td>听词选义、听句选中文等五种模式保持不变，不在本次范围内。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-out">不做</span></td>
+          <td>课程内容与题库</td>
+          <td>词汇、句子、语法、对话、题干与答案均不改动，仅改变展示位置。</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-out">不做</span></td>
+          <td>复习页、发音页、词汇页</td>
+          <td>不受本次改动影响。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">3</span>产品模型与核心流程</h2>
+
+    <h3>3.1 对象与路由</h3>
+    <table>
+      <thead>
+        <tr><th>对象 / 路由</th><th>定义</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Lesson</code></td>
+          <td>一门课，由 <code>lessonId</code> 唯一标识，包含词汇、句子、语法、对话、课文练习与句子练习。</td>
+          <td>未完成 / 已完成</td>
+        </tr>
+        <tr>
+          <td><code>/lesson/:lessonId</code></td>
+          <td>学习页：本课学习内容的唯一展示页面。</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>/lesson/:lessonId/practice</code></td>
+          <td>练习页：本课全部题目的唯一集中练习页面。</td>
+          <td>未作答 / 作答中 / 全部作答</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">课程「已完成」状态沿用现有本地进度记录，语义不变，仅触发位置从学习页迁移到练习页。</p>
+
+    <h3>3.2 核心流程</h3>
+    <div class="card">
+      <div class="flow">
+        <span class="flow-node">首页 / 课程地图</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node learn">学习页</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node practice">练习页</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node done">完成本课</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node learn">下一课学习页</span>
+      </div>
+      <p class="flow-note">练习页可直接通过链接访问，不校验学习完成度；学习页与练习页可随时互相返回。</p>
+    </div>
+
+    <h3>3.3 页面结构对比</h3>
+    <div class="wire">
+      <div>
+        <div class="wire-col-title now">现状：学练混在一起</div>
+        <div class="wire-box">
+          <div class="wire-row learn">词汇</div>
+          <div class="wire-row learn">句子</div>
+          <div class="wire-row mixed">句子练习（内嵌）</div>
+          <div class="wire-row learn">语法</div>
+          <div class="wire-row learn">对话</div>
+          <div class="wire-row practice">课文练习</div>
+        </div>
+        <div class="wire-label">学习与练习交替出现，练习入口在页尾。</div>
+      </div>
+      <div>
+        <div class="wire-col-title next">目标：先学后练</div>
+        <div class="wire-box">
+          <div class="wire-row learn">词汇</div>
+          <div class="wire-row learn">句子</div>
+          <div class="wire-row learn">语法</div>
+          <div class="wire-row learn">对话</div>
+          <div class="wire-row practice">去练习 · N 题</div>
+        </div>
+        <div class="wire-label">学习页以「去练习」收尾，所有题目在练习页集中呈现。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">4</span>功能需求</h2>
+
+    <h3>FR-01 学习页</h3>
+    <span class="tag tag-p0">P0</span>
+    <p class="muted">路由 <code>/lesson/:lessonId</code>；目标是让学习者连续读完本课全部新内容，不被作答打断。</p>
+
+    <div class="block-list">
+      <div class="block">
+        <div class="block-head"><span class="n">1</span>页面头部</div>
+        <p>返回课程地图；级别 · 单元 · 第几课标签；课程标题；本课目标；已完成课程额外显示「已完成 ✓」章。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">2</span>词汇</div>
+        <p>词汇卡片网格，点击卡片发音；标题右侧圆形徽章显示词数。超过 18 个词时默认折叠，提供「展开全部 / 收起」。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">3</span>句子</div>
+        <p>只保留学习能力：句子朗读、中文对照开关、词块「拆解」与逐句注释。<strong>不再包含任何句子练习。</strong></p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">4</span>语法</div>
+        <p>语法说明、例句与提示条，与现状一致。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">5</span>对话</div>
+        <p>对话全文、整段朗读、中文对照开关，与现状一致。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">6</span>底部行动区</div>
+        <p>主按钮「去练习 · N 题 →」进入练习页；N 为本课句子练习与课文练习的总题量。下方保留上一课 / 下一课导航。</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>规则项</th><th>行为</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>作答控件</td><td>学习页不出现提交、判断、计分等任何作答控件；「拆解」属于学习交互，保留。</td></tr>
+        <tr><td>学习是否改变进度</td><td>不改变。翻阅学习内容不写入已完成状态，也不产生得分。</td></tr>
+        <tr><td>已完成课程</td><td>顶部显示「已完成 ✓」，底部主按钮文案改为「再练一次 →」，点击进入练习页。</td></tr>
+        <tr><td>内容缺失</td><td>某课没有语法、对话或句子时，对应区块整体隐藏，不留空标题。</td></tr>
+        <tr><td>课程不存在</td><td>重定向到课程地图 <code>/learn</code>。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>FR-02 练习页</h3>
+    <span class="tag tag-p0">P0</span>
+    <p class="muted">路由 <code>/lesson/:lessonId/practice</code>；目标是让本课所有题目集中在一处完成，并在这里结束本课。</p>
+
+    <div class="block-list">
+      <div class="block">
+        <div class="block-head"><span class="n">1</span>页面头部</div>
+        <p>「← 返回学习」链接；课程标识与标题；练习总进度「已答 X / N」；已完成课程显示状态章。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">2</span>句子练习</div>
+        <p>从学习页迁移过来的句子练习（挖空、词序、中译越），保留即时判定与解析。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">3</span>课文练习</div>
+        <p>原有的选择题与填空题，保留即时判定与解析。</p>
+      </div>
+      <div class="block">
+        <div class="block-head"><span class="n">4</span>完成区</div>
+        <p>本课全部题目作答后出现：课文练习得分、评价文案、完成本课按钮（未完成课）或「下一课」入口（已完成课）。</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>规则项</th><th>行为</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>进入条件</td><td>不校验学习完成度，任何学习者都可直接进入；已完成课程也可再次进入重做。</td></tr>
+        <tr><td>题目范围</td><td>句子练习在前、课文练习在后；两区分别显示各自题量。</td></tr>
+        <tr><td>总进度</td><td>顶部「已答 X / N」中，X 为两个区已作答题数之和，N 为两区题目总数。</td></tr>
+        <tr><td>完成条件</td><td>课文练习全部作答后出现「完成本课」按钮；句子练习是否计入完成条件见第 6 节待确认项。</td></tr>
+        <tr><td>点击完成</td><td>写入已完成记录，显示盖章状态，并提供「下一课」入口。</td></tr>
+        <tr><td>重复进入</td><td>已完成的课程再次完成不会重复计数；盖章只展示，不重复记录。</td></tr>
+        <tr><td>中途离开</td><td>本次作答状态不持久化，刷新或重新进入后从头作答；已完成与得分记录持久保留。</td></tr>
+        <tr><td>无题目</td><td>某课没有练习题时显示空状态与「返回学习」入口，不显示完成按钮。</td></tr>
+        <tr><td>课程不存在</td><td>重定向到课程地图 <code>/learn</code>。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>边界说明</strong>
+      <p>「完成本课」只发生在练习页，学习页不再提供盖章按钮；学习页的已完成状态只做展示。</p>
+    </div>
+
+    <h3>FR-03 入口与导航改造</h3>
+    <span class="tag tag-p0">P0</span>
+    <table>
+      <thead>
+        <tr><th>位置</th><th>改动后行为</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>首页主按钮「继续 / 开始第一课」</td><td>仍指向下一课学习页，文案不变。</td></tr>
+        <tr><td>首页今日任务「学 1 新课」</td><td>指向下一课学习页。</td></tr>
+        <tr><td>课程地图单元卡片</td><td>指向该单元第一门待学课程的学习页，行为不变。</td></tr>
+        <tr><td>学习页底部</td><td>新增「去练习 · N 题 →」，指向本课练习页。</td></tr>
+        <tr><td>学习页上一课 / 下一课</td><td>仍指向相邻课程的学习页；上一课 / 下一课不会跳转到练习页。</td></tr>
+        <tr><td>练习页顶部</td><td>「← 返回学习」回到本课学习页。</td></tr>
+        <tr><td>练习页完成区</td><td>「下一课」指向下一课学习页；已是最后一课时回到课程地图。</td></tr>
+        <tr><td>顶栏「课程」导航</td><td>仍指向 <code>/learn</code>，不变。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>FR-04 完成与状态</h3>
+    <span class="tag tag-p0">P0</span>
+    <table>
+      <thead>
+        <tr><th>状态</th><th>学习页</th><th>练习页</th><th>首页 / 课程地图</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>未完成</td>
+          <td>无常驻章；底部「去练习」</td>
+          <td>可作答；答完出现「完成本课」</td>
+          <td>计入未完成课程，作为「继续学习」候选</td>
+        </tr>
+        <tr>
+          <td>已完成</td>
+          <td>顶部「已完成 ✓」；底部「再练一次」</td>
+          <td>显示已完成；可重做；提供「下一课」</td>
+          <td>计入已完成进度与总课数</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">课程分数沿用现有记录方式：课文练习答对题数 / 课文练习题数，在点击「完成本课」时写入。</p>
+  </section>
+
+  <section>
+    <h2><span class="no">5</span>共享规则与异常</h2>
+    <table>
+      <thead>
+        <tr><th>规则</th><th>定义</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>题量统计</td><td>句子练习 = 本课句子关联练习题；课文练习 = 本课 <code>exercises</code>。总题量 = 两者之和，全站统一使用该口径。</td></tr>
+        <tr><td>完成记录</td><td>只记录「课程 ID + 完成时间 + 分数」，不因重复完成而新增记录。</td></tr>
+        <tr><td>路由约定</td><td>学习页与练习页共享同一 <code>lessonId</code>；未带 <code>lessonId</code> 或课程不存在时统一回课程地图。</td></tr>
+        <tr><td>作答状态</td><td>题目作答状态属于页面会话；完成记录与得分属于持久进度。两者不混用。</td></tr>
+        <tr><td>内容零改动</td><td>拆分过程中不调整任何词条、句子、语法、对话与题目的内容或顺序。</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>回归检查点</strong>
+      <p>拆分后需确认：句子「拆解」仍可用、整段朗读仍可用、词汇折叠仍可用、练习判定与解析仍与拆分前一致、已完成课程的章与分数仍正确显示。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">6</span>待确认问题</h2>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>问题</th><th>当前处理</th></th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Q-01</td>
+          <td>句子练习是否计入「完成本课」条件？</td>
+          <td><span class="tag tag-tbd">TBD</span> 默认沿用现状：只有课文练习全部作答才可完成，句子练习独立计分、不阻塞完成。</td>
+        </tr>
+        <tr>
+          <td>Q-02</td>
+          <td>练习作答进度是否需要跨刷新保存（P1）？</td>
+          <td><span class="tag tag-tbd">TBD</span> 当前版本按「不保存」处理；若做 P1，需要定义恢复精度与重置入口。</td>
+        </tr>
+        <tr>
+          <td>Q-03</td>
+          <td>已完成课程是否需要在课程地图上直接暴露练习入口？</td>
+          <td><span class="tag tag-tbd">TBD</span> 本版不做，统一从学习页的「再练一次」进入。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="doc-foot">
+    <span>越语学堂 · 课程详情信息架构调整</span>
+    <span>v0.1 草案 · 2026-11-02</span>
+  </footer>
+
+</div>
+</body>
+</html>

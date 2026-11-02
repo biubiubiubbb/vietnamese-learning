@@ -31,7 +31,7 @@ export default function CurriculumPage() {
           const pct = total ? (done / total) * 100 : 0;
           const firstTodo = u.lessonIds.find((id) => !state.completedLessons.includes(id)) ?? u.lessonIds[0];
           return (
-            <Link key={u.id} to={`/lesson/${firstTodo}`} className="card" style={{ display: 'block' }}>
+            <Link key={u.id} to={`/unit/${u.id}`} className="card" style={{ display: 'block' }}>
               <div className="flex spread mb8">
                 <span className={`badge-num ${done === total ? 'done' : 'idle'}`} style={{ fontSize: 13, minWidth: 30, height: 30 }}>
                   {String(u.order).padStart(2, '0')}

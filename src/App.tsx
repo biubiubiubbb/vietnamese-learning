@@ -4,6 +4,8 @@ import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import CurriculumPage from './pages/CurriculumPage';
 import LessonPage from './pages/LessonPage';
+import LessonPracticePage from './pages/LessonPracticePage';
+import UnitPage from './pages/UnitPage';
 import PronunciationPage from './pages/PronunciationPage';
 import VocabularyPage from './pages/VocabularyPage';
 import PracticePage from './pages/PracticePage';
@@ -27,7 +29,9 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/learn', element: <CurriculumPage /> },
+      { path: '/unit/:unitId', element: <UnitPage /> },
       { path: '/lesson/:lessonId', element: <LessonPage /> },
+      { path: '/lesson/:lessonId/practice', element: <LessonPracticePage /> },
       { path: '/pronunciation', element: <PronunciationPage /> },
       { path: '/vocabulary', element: <VocabularyPage /> },
       { path: '/practice', element: <PracticePage /> },
