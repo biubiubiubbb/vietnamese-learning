@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SENTENCES, sentencesOfLesson, exercisesOfLesson } from '../content/sentences';
+import { SENTENCES, sentenceById, sentencesOfLesson, exercisesOfLesson } from '../content/sentences';
 import { vocabById } from '../content/vocab';
 import { dueSentences } from '../lib/progress';
 import { checkFill, normalizeAnswer } from '../lib/quiz';
@@ -132,11 +132,12 @@ function SentenceCard({ s, showZh }: { s: Sentence; showZh: boolean }) {
 export function SentenceReview({ sentences, scope }: { sentences: Sentence[]; scope: Scope }) {
   const { state, gradeSentence } = useProgress();
   // 进入复习时冻结牌堆，避免评分后牌堆变动导致跳卡
-  const [deck] = useState(() => {
-    const ids = dueSentences(state, sentences.map((s) => s.id)).slice(0, 20);
-    const byId = new Map(sentences.map((s) => [s.id, s]));
-    return ids.map((id) => byId.get(id)).filter((s): s is Sentence => Boolean(s));
-  });
+  const [deck] = useState(() =>
+    dueSentences(state, sentences.map((s) => s.id))
+      .slice(0, 20)
+      .map((id) => sentenceById.get(id))
+      .filter((s): s is Sentence => Boolean(s)),
+  );
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const speakRef = useRef<SpeakButtonHandle>(null);

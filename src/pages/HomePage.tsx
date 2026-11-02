@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UNITS, LESSONS, unitProgress } from '../content/curriculum';
-import { VOCAB } from '../content/vocab';
-import { SENTENCES } from '../content/sentences';
+import { VOCAB_IDS } from '../content/vocab';
+import { SENTENCE_IDS } from '../content/sentences';
 import { TONES } from '../content/pronunciation';
 import { useProgress } from '../components/ProgressContext';
 import { dueCards, dueSentences } from '../lib/progress';
@@ -11,8 +11,8 @@ export default function HomePage() {
   const { state } = useProgress();
   const nextLesson = LESSONS.find((l) => !state.completedLessons.includes(l.id)) ?? LESSONS[0];
   const doneCount = state.completedLessons.length;
-  const dueWord = Math.min(dueCards(state, VOCAB.map((v) => v.id)).length, 20);
-  const dueSentence = Math.min(dueSentences(state, SENTENCES.map((s) => s.id)).length, 20);
+  const dueWord = Math.min(dueCards(state, VOCAB_IDS).length, 20);
+  const dueSentence = Math.min(dueSentences(state, SENTENCE_IDS).length, 20);
   const currentUnit = UNITS.find((u) => u.lessonIds.includes(nextLesson.id)) ?? UNITS[0];
   const unitStat = unitProgress(currentUnit, state.completedLessons);
   const unitPct = unitStat.total ? (unitStat.done / unitStat.total) * 100 : 0;

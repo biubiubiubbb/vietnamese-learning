@@ -50,7 +50,7 @@ function ChoiceExercise({ ex, onResult }: { ex: Extract<Exercise, { type: 'choic
   const ok = submitted && picked === ex.answer;
 
   return (
-    <div className={`card mb16 ${submitted ? (ok ? '' : '') : ''}`} style={submitted ? { background: ok ? 'var(--ok-bg)' : 'var(--err-bg)' } : {}}>
+    <div className="card mb16" style={submitted ? { background: ok ? 'var(--ok-bg)' : 'var(--err-bg)' } : {}}>
       <div className="flex gap12 mb12">
         {ex.audioText && <SpeakButton text={ex.audioText} />}
         <div style={{ fontWeight: 700, fontSize: 16 }}>{ex.prompt}</div>

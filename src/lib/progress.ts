@@ -19,18 +19,22 @@ export interface ProgressState {
 }
 
 const BOX_DAYS = [0, 1, 2, 4, 7, 15];
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-const DEFAULT_STATE: ProgressState = {
-  completedLessons: [],
-  scores: {},
-  cards: {},
-  sentenceCards: {},
-};
+function createDefaultState(): ProgressState {
+  return { completedLessons: [], scores: {}, cards: {}, sentenceCards: {} };
+}
+
+/** 与词条、句子共用的 5 盒 Leitner 间隔计算。 */
+function nextCard(prev: CardState | undefined, grade: 'again' | 'good'): CardState {
+  const box = grade === 'good' ? Math.min((prev?.box ?? 0) + 1, 5) : 1;
+  return { box, due: Date.now() + BOX_DAYS[box] * DAY_MS };
+}
 
 export function loadProgress(): ProgressState {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULT_STATE };
+    if (!raw) return createDefaultState();
     const parsed = JSON.parse(raw) as Partial<ProgressState>;
     return {
       completedLessons: parsed.completedLessons ?? [],
@@ -39,7 +43,7 @@ export function loadProgress(): ProgressState {
       sentenceCards: parsed.sentenceCards ?? {},
     };
   } catch {
-    return { ...DEFAULT_STATE };
+    return createDefaultState();
   }
 }
 
@@ -65,19 +69,10 @@ export function gradeCard(
   vocabId: string,
   grade: 'again' | 'good',
 ): ProgressState {
-  const prev = state.cards[vocabId];
-  const box = grade === 'good' ? Math.min((prev?.box ?? 0) + 1, 5) : 1;
-  const due = Date.now() + BOX_DAYS[box] * 24 * 60 * 60 * 1000;
-  return { ...state, cards: { ...state.cards, [vocabId]: { box, due } } };
-}
-
-export function dueCards(state: ProgressState, allVocabIds: string[], now = Date.now()): string[] {
-  const reviewed = allVocabIds.filter((id) => {
-    const c = state.cards[id];
-    return c && c.due <= now;
-  });
-  const fresh = allVocabIds.filter((id) => !state.cards[id]);
-  return [...reviewed, ...fresh];
+  return {
+    ...state,
+    cards: { ...state.cards, [vocabId]: nextCard(state.cards[vocabId], grade) },
+  };
 }
 
 /** 句子掌握度：与词条共用 5 盒 Leitner 间隔。 */
@@ -86,19 +81,31 @@ export function gradeSentence(
   sentenceId: string,
   grade: 'again' | 'good',
 ): ProgressState {
-  const prev = state.sentenceCards[sentenceId];
-  const box = grade === 'good' ? Math.min((prev?.box ?? 0) + 1, 5) : 1;
-  const due = Date.now() + BOX_DAYS[box] * 24 * 60 * 60 * 1000;
-  return { ...state, sentenceCards: { ...state.sentenceCards, [sentenceId]: { box, due } } };
+  return {
+    ...state,
+    sentenceCards: {
+      ...state.sentenceCards,
+      [sentenceId]: nextCard(state.sentenceCards[sentenceId], grade),
+    },
+  };
+}
+
+/** 先排到期复现的卡，再排从未学过的卡。 */
+function dueIds(cards: Record<string, CardState>, allIds: string[], now: number): string[] {
+  const reviewed = allIds.filter((id) => {
+    const c = cards[id];
+    return c && c.due <= now;
+  });
+  const fresh = allIds.filter((id) => !cards[id]);
+  return [...reviewed, ...fresh];
+}
+
+export function dueCards(state: ProgressState, allVocabIds: string[], now = Date.now()): string[] {
+  return dueIds(state.cards, allVocabIds, now);
 }
 
 export function dueSentences(state: ProgressState, allSentenceIds: string[], now = Date.now()): string[] {
-  const reviewed = allSentenceIds.filter((id) => {
-    const c = state.sentenceCards[id];
-    return c && c.due <= now;
-  });
-  const fresh = allSentenceIds.filter((id) => !state.sentenceCards[id]);
-  return [...reviewed, ...fresh];
+  return dueIds(state.sentenceCards, allSentenceIds, now);
 }
 
 export function resetProgress(): ProgressState {
@@ -107,5 +114,5 @@ export function resetProgress(): ProgressState {
   } catch {
     /* 忽略 */
   }
-  return { ...DEFAULT_STATE };
+  return createDefaultState();
 }

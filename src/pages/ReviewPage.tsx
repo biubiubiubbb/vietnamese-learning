@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { VOCAB } from '../content/vocab';
-import { SENTENCES } from '../content/sentences';
+import { VOCAB_IDS, vocabById } from '../content/vocab';
+import { SENTENCES, SENTENCE_IDS } from '../content/sentences';
 import type { VocabItem } from '../content/types';
 import { useProgress } from '../components/ProgressContext';
 import { dueCards, dueSentences } from '../lib/progress';
@@ -96,15 +96,18 @@ export default function ReviewPage() {
   const { state } = useProgress();
   const [stage, setStage] = useState<'words' | 'sentences'>('words');
 
-  // 进入页面时冻结本轮的词条牌堆，评分后牌堆变动不会导致跳卡
-  const [wordDeck] = useState<VocabItem[]>(() => {
-    const ids = dueCards(state, VOCAB.map((v) => v.id)).slice(0, 20);
-    const byId = new Map(VOCAB.map((v) => [v.id, v]));
-    return ids.map((id) => byId.get(id)!).filter(Boolean);
-  });
+  const dueWordIds = dueCards(state, VOCAB_IDS);
 
-  const dueWord = Math.min(dueCards(state, VOCAB.map((v) => v.id)).length, 20);
-  const dueSentence = Math.min(dueSentences(state, SENTENCES.map((s) => s.id)).length, 20);
+  // 进入页面时冻结本轮的词条牌堆，评分后牌堆变动不会导致跳卡
+  const [wordDeck] = useState<VocabItem[]>(() =>
+    dueWordIds
+      .slice(0, 20)
+      .map((id) => vocabById.get(id))
+      .filter((v): v is VocabItem => Boolean(v)),
+  );
+
+  const dueWord = Math.min(dueWordIds.length, 20);
+  const dueSentence = Math.min(dueSentences(state, SENTENCE_IDS).length, 20);
 
   return (
     <div className="container" style={{ paddingTop: 36, paddingBottom: 60 }}>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { VOCAB } from '../content/vocab';
 import { SENTENCES } from '../content/sentences';
-import { checkFill, normalizeAnswer } from '../lib/quiz';
+import { checkAnswer, stripTones } from '../lib/quiz';
 import { speak } from '../lib/speech';
 
 type Mode = 'listen-word' | 'listen-sentence' | 'dictation' | 'untoned' | 'translate';
@@ -45,18 +45,6 @@ function shuffle<T>(items: T[]): T[] {
 
 function sample<T>(items: T[], n: number): T[] {
   return shuffle(items).slice(0, n);
-}
-
-/** 去掉声调与 đ 的钩，用于「补全声调」的宽松比对。 */
-function stripTones(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 function buildChoiceQuestions(mode: Mode): Question[] {
@@ -161,14 +149,8 @@ function Runner({ mode, onRestart }: { mode: Mode; onRestart: () => void }) {
       return;
     }
     if (!value.trim()) return;
-    let ok: boolean;
-    let near = false;
-    if (q.check === 'toneless') {
-      ok = normalizeAnswer(value) === normalizeAnswer(q.answer);
-      near = !ok && stripTones(value) === stripTones(q.answer);
-    } else {
-      ok = checkFill(value, q.answer);
-    }
+    const ok = checkAnswer(value, q.answer, q.check);
+    const near = q.check === 'toneless' && !ok && stripTones(value) === stripTones(q.answer);
     if (ok) setScore((s) => s + 1);
     setNearTone(near);
     setSubmitted(true);
@@ -184,11 +166,7 @@ function Runner({ mode, onRestart }: { mode: Mode; onRestart: () => void }) {
   };
 
   const choiceOk = q.kind === 'choice' && submitted && selected === q.answer;
-  const inputOk = q.kind === 'input' && submitted && (
-    q.check === 'toneless'
-      ? normalizeAnswer(value) === normalizeAnswer(q.answer)
-      : checkFill(value, q.answer)
-  );
+  const inputOk = q.kind === 'input' && submitted && checkAnswer(value, q.answer, q.check);
 
   return (
     <div className="card" style={{ maxWidth: 620, margin: '0 auto' }}>

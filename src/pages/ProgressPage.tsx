@@ -1,16 +1,16 @@
 import { Link } from 'react-router-dom';
 import { UNITS, LESSONS, unitProgress } from '../content/curriculum';
-import { VOCAB } from '../content/vocab';
+import { VOCAB_IDS } from '../content/vocab';
 import { useProgress } from '../components/ProgressContext';
 import { dueCards, dueSentences } from '../lib/progress';
-import { SENTENCES } from '../content/sentences';
+import { SENTENCE_IDS } from '../content/sentences';
 import ProgressBar from '../components/ProgressBar';
 
 export default function ProgressPage() {
   const { state, reset } = useProgress();
   const doneCount = state.completedLessons.length;
-  const due = Math.min(dueCards(state, VOCAB.map((v) => v.id)).length, 20);
-  const dueSentence = Math.min(dueSentences(state, SENTENCES.map((s) => s.id)).length, 20);
+  const due = Math.min(dueCards(state, VOCAB_IDS).length, 20);
+  const dueSentence = Math.min(dueSentences(state, SENTENCE_IDS).length, 20);
 
   return (
     <div className="container" style={{ paddingTop: 36, paddingBottom: 60 }}>

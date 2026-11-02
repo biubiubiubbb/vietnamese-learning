@@ -170,4 +170,5 @@ export const VOCAB: VocabItem[] = [
   { id: 'u8-18', vi: 'rảnh', zh: '有空', pos: 'adj', tags: ['work'], example: { vi: 'Tối nay bạn rảnh không?', zh: '今晚你有空吗？' } },
 ];
 
+export const VOCAB_IDS: string[] = VOCAB.map((v) => v.id);
 export const vocabById: Map<string, VocabItem> = new Map(VOCAB.map((v) => [v.id, v]));
