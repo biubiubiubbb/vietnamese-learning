@@ -1,6 +1,6 @@
 import type { AlphabetItem, ToneItem, SoundGroup, MinimalPair, RuleNote } from './types';
 
-export const ALPHABET: AlphabetItem[] = [
+export let ALPHABET: AlphabetItem[] = [
   { letter: 'A a', name: 'a', ipa: '/aː/', zhApprox: '啊（长）' },
   { letter: 'Ă ă', name: 'á', ipa: '/a/', zhApprox: '啊（短促）', note: '比 a 短一半' },
   { letter: 'Â â', name: 'ớ', ipa: '/ə/', zhApprox: '短促的「呃」' },
@@ -32,7 +32,7 @@ export const ALPHABET: AlphabetItem[] = [
   { letter: 'Y y', name: 'y', ipa: '/i/', zhApprox: '衣' },
 ];
 
-export const TONES: ToneItem[] = [
+export let TONES: ToneItem[] = [
   { name: 'ngang 平声', mark: '无符号', sample: 'a', contour: 'M 8 34 L 62 34', zhFeel: '≈ 普通话一声（阴平），平稳中高', example: { vi: 'ba', zh: '三 / 爸爸' } },
   { name: 'sắc 锐声', mark: '´', sample: 'á', contour: 'M 8 42 L 62 12', zhFeel: '≈ 普通话二声（阳平），上扬', example: { vi: 'bá', zh: '伯母' } },
   { name: 'huyền 玄声', mark: '`', sample: 'à', contour: 'M 8 12 L 62 42', zhFeel: '≈ 普通话四声（去声），下降', example: { vi: 'bà', zh: '奶奶 / 夫人' } },
@@ -41,7 +41,7 @@ export const TONES: ToneItem[] = [
   { name: 'nặng 重声', mark: '̣', sample: 'ạ', contour: 'M 8 18 L 34 44 L 62 44', zhFeel: '≈ 短促低降，戛然而止', example: { vi: 'bạ', zh: '（感叹词）' } },
 ];
 
-export const CONSONANT_GROUPS: SoundGroup[] = [
+export let CONSONANT_GROUPS: SoundGroup[] = [
   {
     title: '中文没有的声母',
     items: [
@@ -63,7 +63,7 @@ export const CONSONANT_GROUPS: SoundGroup[] = [
   },
 ];
 
-export const VOWEL_GROUPS: SoundGroup[] = [
+export let VOWEL_GROUPS: SoundGroup[] = [
   {
     title: '中文没有的元音',
     items: [
@@ -84,7 +84,7 @@ export const VOWEL_GROUPS: SoundGroup[] = [
   },
 ];
 
-export const MINIMAL_PAIRS: MinimalPair[] = [
+export let MINIMAL_PAIRS: MinimalPair[] = [
   { pair: ['hỏi', 'hỏĩ'], zh: ['问', '—'], point: '问声 hỏi vs 跌声 ngã' },
   { pair: ['ba', 'bà'], zh: ['三', '奶奶'], point: '平声 vs 玄声' },
   { pair: ['ma', 'mà', 'má'], zh: ['鬼', '但是', '妈妈'], point: '平 / 玄 / 锐三调对比' },
@@ -95,7 +95,7 @@ export const MINIMAL_PAIRS: MinimalPair[] = [
   { pair: ['nghe', 'nhe'], zh: ['听', '（误读）'], point: '舌根鼻音 ng vs 舌尖 n' },
 ];
 
-export const TONE_RULES: RuleNote[] = [
+export let TONE_RULES: RuleNote[] = [
   {
     title: '声调符号标在哪个元音上',
     body: '一个音节有多个元音时，按优先级标注：① 带符号的元音优先（ê / ơ / â / ô / ă / ư）；② 都没有时标在主要元音上；③ 双元音标在第二个元音。',
@@ -128,3 +128,21 @@ export const TONE_RULES: RuleNote[] = [
     ],
   },
 ];
+
+export interface PronunciationData {
+  alphabet: AlphabetItem[];
+  tones: ToneItem[];
+  consonantGroups: SoundGroup[];
+  vowelGroups: SoundGroup[];
+  minimalPairs: MinimalPair[];
+  toneRules: RuleNote[];
+}
+
+export function setPronunciation(data: PronunciationData): void {
+  ALPHABET = data.alphabet ?? [];
+  TONES = data.tones ?? [];
+  CONSONANT_GROUPS = data.consonantGroups ?? [];
+  VOWEL_GROUPS = data.vowelGroups ?? [];
+  MINIMAL_PAIRS = data.minimalPairs ?? [];
+  TONE_RULES = data.toneRules ?? [];
+}

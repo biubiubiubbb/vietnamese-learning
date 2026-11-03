@@ -5,7 +5,7 @@ import { vocabById } from '../content/vocab';
 import { exercisesOfLesson } from '../content/sentences';
 import { POS_LABEL, type Dialogue, type VocabItem } from '../content/types';
 import { useProgress } from '../components/ProgressContext';
-import { speak, stopSpeaking } from '../lib/speech';
+import { speak, stopSpeaking, dialogueVoiceFor, getPreferredVoice } from '../lib/speech';
 import SpeakButton, { type SpeakButtonHandle } from '../components/SpeakButton';
 import SentenceSection from '../components/SentenceSection';
 
@@ -73,9 +73,13 @@ export default function LessonPage() {
     }
     const token = ++dlgTokenRef.current;
     setPlayingDlg(d.id);
+    // 一场对话内固定用一男一女交替朗读，避免中途切换音色
+    const lead = getPreferredVoice();
+    const speakers = [...new Set(d.lines.map((line) => line.speaker))];
     for (const line of d.lines) {
       if (dlgTokenRef.current !== token) return;
-      await speak(line.vi);
+      const voice = dialogueVoiceFor(speakers.indexOf(line.speaker), lead);
+      await speak(line.vi, undefined, voice);
     }
     if (dlgTokenRef.current === token) setPlayingDlg(null);
   };

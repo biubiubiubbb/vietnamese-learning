@@ -4,7 +4,7 @@ import type { Sentence } from './types';
  * 句子库：每课 3 句，第 1 句配 1 道挖空，第 2/3 句配 1 道词序或中译越。
  * 词块顺序 = 原句语序；order 练习的 answer 为词块下标顺序。
  */
-export const SENTENCES: Sentence[] = [
+export let SENTENCES: Sentence[] = [
   // ===== U1 =====
   {
     id: 's1-1-1', lessonId: 'l1-1', order: 1, tag: 'statement',
@@ -902,8 +902,15 @@ export const SENTENCES: Sentence[] = [
   },
 ];
 
-export const SENTENCE_IDS: string[] = SENTENCES.map((s) => s.id);
+export let SENTENCE_IDS: string[] = SENTENCES.map((s) => s.id);
 export const sentenceById: Map<string, Sentence> = new Map(SENTENCES.map((s) => [s.id, s]));
+
+export function setSentences(items: Sentence[]): void {
+  SENTENCES = items;
+  SENTENCE_IDS = items.map((s) => s.id);
+  sentenceById.clear();
+  for (const item of items) sentenceById.set(item.id, item);
+}
 
 export function sentencesOfLesson(lessonId: string): Sentence[] {
   return SENTENCES.filter((s) => s.lessonId === lessonId).sort((a, b) => a.order - b.order);

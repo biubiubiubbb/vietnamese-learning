@@ -1,6 +1,6 @@
 import type { Unit, Lesson } from './types';
 
-export const UNITS: Unit[] = [
+export let UNITS: Unit[] = [
   { id: 'a1-u1', level: 'A1', order: 1, title: '发音与字母', subtitle: '29 个字母、6 个声调、难发音突破', lessonIds: ['l1-1', 'l1-2', 'l1-3', 'l1-4'] },
   { id: 'a1-u2', level: 'A1', order: 2, title: '问候与自我介绍', subtitle: '称呼体系、问好、国籍与职业', lessonIds: ['l2-1', 'l2-2', 'l2-3'] },
   { id: 'a1-u3', level: 'A1', order: 3, title: '数字、时间与日期', subtitle: '数字、钟点、星期与日期表达', lessonIds: ['l3-1', 'l3-2', 'l3-3'] },
@@ -11,7 +11,7 @@ export const UNITS: Unit[] = [
   { id: 'a2-u8', level: 'A2', order: 8, title: '工作、爱好与计划', subtitle: '职业、爱好、过去现在将来', lessonIds: ['l8-1', 'l8-2', 'l8-3'] },
 ];
 
-export const LESSONS: Lesson[] = [
+export let LESSONS: Lesson[] = [
   // ===== U1 =====
   {
     id: 'l1-1', unitId: 'a1-u1', order: 1, title: '29 个字母',
@@ -718,6 +718,15 @@ export const LESSONS: Lesson[] = [
 
 export const lessonById: Map<string, Lesson> = new Map(LESSONS.map((l) => [l.id, l]));
 export const unitById: Map<string, Unit> = new Map(UNITS.map((u) => [u.id, u]));
+
+export function setCurriculum(units: Unit[], lessons: Lesson[]): void {
+  UNITS = units;
+  LESSONS = lessons;
+  unitById.clear();
+  for (const unit of units) unitById.set(unit.id, unit);
+  lessonById.clear();
+  for (const lesson of lessons) lessonById.set(lesson.id, lesson);
+}
 
 export function getNextLesson(lessonId: string): Lesson | null {
   const idx = LESSONS.findIndex((l) => l.id === lessonId);

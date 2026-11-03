@@ -3,6 +3,7 @@ import { useProgress } from './ProgressContext';
 import { dueCards } from '../lib/progress';
 import { VOCAB_IDS } from '../content/vocab';
 import GhibliBackground from './GhibliBackground';
+import VoiceToggle from './VoiceToggle';
 
 const TABS = [
   { to: '/', label: '首页', end: true },
@@ -49,6 +50,7 @@ export default function Layout() {
               </NavLink>
             ))}
           </nav>
+          <VoiceToggle />
           {due > 0 && (
             <Link to="/review" className="due-badge" aria-label={`今日待复习 ${due} 个词条`}>
               待复习 <strong>{due}</strong>

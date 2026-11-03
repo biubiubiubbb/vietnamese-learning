@@ -466,6 +466,11 @@ input, select {
   box-shadow: var(--shadow-xs);
 }
 .nav-tab:not(.active):hover { background: var(--paper-deep); }
+.voice-toggle {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
 
 .due-badge {
   display: inline-flex;

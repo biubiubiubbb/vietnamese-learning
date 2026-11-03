@@ -1,6 +1,7 @@
 node_modules
 dist
 .DS_Store
+server/data
 
 # 本地 IDE / 设计过程产物
 .trae

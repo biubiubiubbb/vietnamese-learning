@@ -1,6 +1,6 @@
 import type { VocabItem } from './types';
 
-export const VOCAB: VocabItem[] = [
+export let VOCAB: VocabItem[] = [
   // ===== U1 发音（语音相关概念词） =====
   { id: 'u1-01', vi: 'chữ cái', zh: '字母', pos: 'n', tags: ['grammar'], example: { vi: 'Tiếng Việt có 29 chữ cái.', zh: '越南语有 29 个字母。' } },
   { id: 'u1-02', vi: 'thanh điệu', zh: '声调', pos: 'n', hanViet: '声调', tags: ['grammar'], example: { vi: 'Tiếng Việt có sáu thanh điệu.', zh: '越南语有六个声调。' } },
@@ -170,5 +170,12 @@ export const VOCAB: VocabItem[] = [
   { id: 'u8-18', vi: 'rảnh', zh: '有空', pos: 'adj', tags: ['work'], example: { vi: 'Tối nay bạn rảnh không?', zh: '今晚你有空吗？' } },
 ];
 
-export const VOCAB_IDS: string[] = VOCAB.map((v) => v.id);
+export let VOCAB_IDS: string[] = VOCAB.map((v) => v.id);
 export const vocabById: Map<string, VocabItem> = new Map(VOCAB.map((v) => [v.id, v]));
+
+export function setVocab(items: VocabItem[]): void {
+  VOCAB = items;
+  VOCAB_IDS = items.map((v) => v.id);
+  vocabById.clear();
+  for (const item of items) vocabById.set(item.id, item);
+}

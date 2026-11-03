@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD｜越语学堂中后台管理系统</title>
+<style>
+  :root {
+    --paper: #FBF3E4;
+    --paper-deep: #F5E9D4;
+    --card: #FFFDF6;
+    --ink: #2E1F12;
+    --ink-soft: #8A7A66;
+    --line: #E4D8C6;
+    --orange: #E8622C;
+    --orange-deep: #C94F1F;
+    --orange-soft: #F6CBB2;
+    --peach: #F8D9C4;
+    --teal: #1AA6A0;
+    --teal-soft: #D6EEEC;
+    --yellow: #F5D44F;
+    --yellow-soft: #FBE9A8;
+    --ok: #2F8F5B;
+    --ok-soft: #DFF0E4;
+    --err: #C0392B;
+    --err-soft: #FADFDB;
+    --r: 14px;
+    --shadow: 0 2px 0 rgba(46, 31, 18, 0.08);
+    --font: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    --font-vi: "Be Vietnam Pro", "PingFang SC", "Noto Sans SC", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image: radial-gradient(rgba(46, 31, 18, 0.045) 1.1px, transparent 1.1px);
+    background-size: 24px 24px;
+    font-family: var(--font);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--teal); }
+  .page { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .doc-head {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px 34px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  .kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    color: var(--orange); text-transform: uppercase;
+  }
+  .kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+  h1 { font-size: 32px; line-height: 1.3; margin: 10px 0 14px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--ink-soft); font-size: 15px; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .meta-item {
+    font-size: 12.5px; background: var(--yellow-soft);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px;
+  }
+  .meta-item strong { color: var(--ink-soft); font-weight: 700; margin-right: 6px; }
+
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 0 0 40px; padding: 14px 16px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow); font-size: 13px;
+  }
+  .toc a { color: var(--ink-soft); text-decoration: none; padding: 2px 8px; border-radius: 999px; }
+  .toc a:hover { background: var(--paper-deep); color: var(--ink); }
+
+  section { margin-bottom: 46px; }
+  h2 {
+    font-size: 22px; margin: 0 0 18px; padding-left: 14px;
+    border-left: 5px solid var(--orange); line-height: 1.3;
+  }
+  h2 .no {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; margin-right: 10px; border-radius: 50%;
+    background: var(--orange); color: #FFFDF6; font-size: 13px; vertical-align: 2px;
+  }
+  h3 { font-size: 16.5px; margin: 26px 0 10px; }
+  h3:first-of-type { margin-top: 0; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 15px; color: var(--ink-soft); }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r); padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 760px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  .muted { color: var(--ink-soft); }
+  .tag {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    padding: 2px 9px; border-radius: 999px; vertical-align: 1px;
+  }
+  .tag-p0 { background: var(--orange-soft); color: var(--orange-deep); }
+  .tag-p1 { background: var(--teal-soft); color: var(--teal); }
+  .tag-out { background: #EDE7DC; color: #7C6E5E; }
+  .tag-tbd { background: var(--yellow); color: #6A5314; }
+  .tag-assume { background: var(--peach); color: #8A3D1A; }
+
+  table {
+    width: 100%; border-collapse: collapse; background: var(--card);
+    border: 1px solid var(--line); border-radius: var(--r);
+    overflow: hidden; font-size: 14px; margin: 12px 0 18px;
+  }
+  th, td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--orange-soft); font-size: 13px; font-weight: 800; color: #8A3D1A; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 760px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+  .metric { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .metric .num { font-size: 24px; font-weight: 800; line-height: 1.2; }
+  .metric .label { font-size: 12.5px; color: var(--ink-soft); }
+  .metric.orange .num { color: var(--orange); }
+  .metric.teal .num { color: var(--teal); }
+  .metric.yellow .num { color: #9A7412; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 4px; }
+  .flow-node {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 9px 14px; font-size: 13.5px; font-weight: 700; box-shadow: var(--shadow);
+  }
+  .flow-node.start { border-color: var(--teal); background: var(--teal-soft); }
+  .flow-node.act { border-color: var(--orange); background: var(--orange-soft); }
+  .flow-node.ok { border-color: var(--ok); background: var(--ok-soft); }
+  .flow-node.warn { border-color: #B58B18; background: var(--yellow-soft); }
+  .flow-node.err { border-color: var(--err); background: var(--err-soft); }
+  .flow-arrow { color: var(--ink-soft); font-size: 16px; }
+  .flow-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; }
+
+  .fr {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r); padding: 18px 20px; box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .fr-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .fr-id {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 12px; font-weight: 700; background: var(--ink); color: var(--card);
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .fr-title { font-size: 16px; font-weight: 800; }
+  .fr p { font-size: 14px; }
+  .fr .label { font-weight: 800; color: var(--orange-deep); font-size: 13px; }
+  .fr ul { margin-bottom: 8px; }
+  .fr li { font-size: 13.5px; }
+
+  .status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .st-ready { background: var(--ok-soft); color: var(--ok); }
+  .st-stale { background: var(--yellow-soft); color: #85630F; }
+  .st-gen { background: var(--teal-soft); color: var(--teal); }
+  .st-fail { background: var(--err-soft); color: var(--err); }
+  .st-off { background: #EDE7DC; color: #7C6E5E; }
+  .st-both { display: inline-flex; gap: 4px; }
+
+  .rule-table td:first-child { width: 78px; font-weight: 800; color: var(--orange-deep); }
+
+  /* ---------- 交互预览 ---------- */
+  .demo {
+    border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+    background: var(--card); box-shadow: var(--shadow); margin-top: 14px;
+  }
+  .demo-top {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; background: var(--paper-deep); border-bottom: 1px solid var(--line);
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .demo-top strong { color: var(--ink); }
+  .demo-body { display: grid; grid-template-columns: 176px minmax(0, 1fr); min-height: 540px; }
+  @media (max-width: 820px) { .demo-body { grid-template-columns: 1fr; } }
+  .demo-side { border-right: 1px solid var(--line); padding: 12px; background: var(--paper); }
+  @media (max-width: 820px) { .demo-side { border-right: none; border-bottom: 1px solid var(--line); } }
+  .demo-nav { display: grid; gap: 5px; }
+  .demo-nav button {
+    text-align: left; border: 1px solid transparent; background: transparent;
+    color: var(--ink-soft); font: inherit; font-size: 13px; padding: 7px 10px;
+    border-radius: 8px; cursor: pointer;
+  }
+  .demo-nav button:hover { background: var(--paper-deep); color: var(--ink); }
+  .demo-nav button.on { background: var(--orange-soft); color: var(--orange-deep); font-weight: 800; }
+  .demo-main { padding: 16px; min-width: 0; }
+  .demo-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .demo-search {
+    flex: 1 1 180px; min-width: 0; padding: 7px 11px; font: inherit; font-size: 13px;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink);
+  }
+  .demo-select {
+    padding: 7px 10px; font: inherit; font-size: 13px; border: 1px solid var(--line);
+    border-radius: 9px; background: var(--card); color: var(--ink);
+  }
+  .demo-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
+  @media (max-width: 980px) { .demo-workspace { grid-template-columns: 1fr; } }
+  .demo-table-wrap { overflow-x: auto; }
+  .demo-table { min-width: 560px; font-size: 13px; margin: 0; }
+  .demo-table th, .demo-table td { padding: 8px 10px; }
+  .demo-table th { background: var(--paper-deep); color: var(--ink); font-size: 12px; }
+  .demo-table tbody tr { cursor: pointer; }
+  .demo-table tbody tr:hover { background: var(--yellow-soft); }
+  .demo-table tbody tr.on { background: var(--orange-soft); }
+  .demo-vi { font-family: var(--font-vi); font-weight: 700; }
+  .demo-panel {
+    border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+    background: var(--paper); font-size: 13px; min-width: 0;
+  }
+  .demo-panel h4 { margin: 0 0 10px; font-size: 14px; }
+  .demo-field { margin-bottom: 9px; }
+  .demo-field label { display: block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 3px; font-weight: 700; }
+  .demo-input {
+    width: 100%; padding: 6px 9px; font: inherit; font-size: 13px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink);
+  }
+  .demo-input.vi { font-family: var(--font-vi); font-weight: 700; }
+  .demo-audio-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 7px 0; border-top: 1px dashed var(--line);
+  }
+  .demo-audio-row:first-of-type { border-top: none; }
+  .demo-audio-name { font-weight: 700; font-size: 12.5px; }
+  .demo-btn {
+    border: 1px solid var(--ink); background: var(--card); color: var(--ink);
+    font: inherit; font-size: 11.5px; font-weight: 700; padding: 3px 8px;
+    border-radius: 7px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink);
+  }
+  .demo-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .demo-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+  .demo-btn.primary { background: var(--orange); color: #FFFDF6; }
+  .demo-btn.teal { background: var(--teal); color: #FFFDF6; }
+  .demo-btn:disabled { opacity: .55; cursor: default; transform: none; box-shadow: 2px 2px 0 var(--ink); }
+  .demo-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  .demo-empty { color: var(--ink-soft); font-size: 13px; padding: 18px 4px; text-align: center; }
+  .demo-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; }
+  .demo-recorder {
+    border: 1px dashed var(--orange); border-radius: 10px; padding: 12px;
+    margin-top: 10px; background: var(--card);
+  }
+  .demo-rec-time {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 22px; font-weight: 800; color: var(--orange-deep); line-height: 1.2;
+  }
+  .demo-rec-wave { display: flex; gap: 3px; align-items: center; height: 22px; margin: 8px 0; }
+  .demo-rec-wave i {
+    display: block; width: 3px; height: 18px; border-radius: 2px;
+    background: var(--orange); animation: recwave .65s ease-in-out infinite alternate;
+  }
+  .demo-rec-wave i:nth-child(3n) { animation-delay: .12s; }
+  .demo-rec-wave i:nth-child(4n) { animation-delay: .24s; height: 12px; }
+  .demo-rec-wave i:nth-child(5n) { animation-delay: .36s; height: 20px; }
+  @keyframes recwave { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+  .toast {
+    position: fixed; left: 50%; top: 18px; transform: translateX(-50%) translateY(-16px);
+    background: var(--ink); color: var(--card); font-size: 13px; font-weight: 700;
+    padding: 9px 16px; border-radius: 999px; opacity: 0; pointer-events: none;
+    transition: .18s ease; z-index: 99; max-width: 90vw; box-shadow: 0 4px 0 rgba(46,31,18,.18);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .wire {
+    display: grid; grid-template-columns: 180px 1fr; gap: 0;
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    background: var(--card); font-size: 12px; min-height: 280px;
+  }
+  .wire-side { background: var(--paper-deep); border-right: 1px solid var(--line); padding: 12px; }
+  .wire-side div { padding: 6px 8px; border-radius: 7px; margin-bottom: 4px; }
+  .wire-side .on { background: var(--orange-soft); font-weight: 800; }
+  .wire-main { padding: 12px; }
+  .wire-top { display: flex; gap: 8px; margin-bottom: 12px; }
+  .wire-bar { flex: 1; height: 26px; background: var(--paper-deep); border: 1px dashed var(--line); border-radius: 7px; }
+  .wire-grid { display: grid; grid-template-columns: 1fr 240px; gap: 10px; }
+  @media (max-width: 760px) { .wire { grid-template-columns: 1fr; } .wire-side { display: none; } .wire-grid { grid-template-columns: 1fr; } }
+  .wire-box { border: 1px dashed var(--line); border-radius: 8px; padding: 10px; color: var(--ink-soft); min-height: 70px; }
+  .wire-box.dark { border-style: solid; background: var(--paper); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <span class="kicker">PRD · 中后台管理系统</span>
+    <h1>越语学堂中后台管理系统</h1>
+    <p class="subtitle">把现有前端的学习内容与双音色语音从静态代码迁移为可持久化、可配置的内容资产；后台沿用前端的手账视觉语言。</p>
+    <div class="meta">
+      <span class="meta-item"><strong>版本</strong>v1.0</span>
+      <span class="meta-item"><strong>日期</strong>2026-11-02</span>
+      <span class="meta-item"><strong>状态</strong>待评审</span>
+      <span class="meta-item"><strong>角色</strong>单人管理员</span>
+      <span class="meta-item"><strong>生效方式</strong>保存立即生效</span>
+      <span class="meta-item"><strong>范围</strong>P0 内容与音频后台</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="目录">
+    <a href="#background">1 背景与目标</a>
+    <a href="#scope">2 范围</a>
+    <a href="#model">3 产品模型</a>
+    <a href="#flows">4 核心流程</a>
+    <a href="#requirements">5 功能需求</a>
+    <a href="#demo">6 交互预览</a>
+    <a href="#rules">7 共享规则</a>
+    <a href="#visual">8 视觉与布局</a>
+    <a href="#states">9 状态与异常</a>
+    <a href="#open">10 已确认决策</a>
+  </nav>
+
+  <!-- ===== 1 ===== -->
+  <section id="background">
+    <h2><span class="no">1</span>背景与目标</h2>
+    <p class="lead">前端学习流程已经可用，但内容仍然是代码的一部分。</p>
+    <div class="card">
+      <p><strong>现状。</strong>前端包含 8 个单元、25 节课、152 个词条、75 个句子；发音中心包含 29 个字母、6 个声调、4 组易混音、8 组最小对立体、4 条标调规则。朗读音频由脚本预生成：530 条文本 × 女声 / 男声 = 1,060 个片段。</p>
+      <p><strong>问题。</strong>改文案、调顺序、补音频都要改代码、重新构建、重新生成音频；运营无法独立维护。文本与音频分开维护后，容易出现“页面显示新句子、音频仍是旧句子”的不一致。</p>
+      <p><strong>产品决策。</strong>建设中后台，把学习内容与音频作为统一内容资产持久化管理；保存立即生效；后台沿用前端的手账视觉语言，但信息密度更高、操作更克制。</p>
+      <p><strong>目标结果。</strong>管理员不改代码即可完成内容增删改、排序、双音色音频生成 / 替换与基础配置；前端始终读取同一份最新内容，音频缺失时仍能正常学习。</p>
+    </div>
+    <div class="metric-grid" style="margin-top:16px">
+      <div class="metric orange"><div class="num">8 / 25</div><div class="label">单元 / 课程</div></div>
+      <div class="metric teal"><div class="num">152 / 75</div><div class="label">词条 / 句子</div></div>
+      <div class="metric yellow"><div class="num">1,060</div><div class="label">双音色音频片段</div></div>
+      <div class="metric"><div class="num">6</div><div class="label">大内容管理模块</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 2 ===== -->
+  <section id="scope">
+    <h2><span class="no">2</span>范围</h2>
+    <p>P0 只覆盖“唯一管理员能独立维护现有全部内容与音频”这一条完整闭环；不做多角色、审批、数据分析与学员管理。</p>
+    <table>
+      <thead><tr><th>优先级</th><th>模块</th><th>包含</th><th>完成标志</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>初始化导入</td><td>现有内容与 1,060 个音频一次性导入，数量核对，幂等重试</td><td>后台数量与前端现有内容一致</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>总览</td><td>内容数量、音频健康、最近修改、快捷入口</td><td>管理员能定位待处理内容</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>课程结构</td><td>单元、课程的增删改、排序、课程归属</td><td>前端课程地图与单元页同步变化</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>词汇库</td><td>词条增删改、标签、汉越、例句、引用关系</td><td>前端词汇页与课程词汇同步变化</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>句子与句子练习</td><td>句子、词块、挖空 / 词序 / 中译越练习</td><td>前端句子拆解与练习同步变化</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>课程内容</td><td>语法点、对话、课程练习</td><td>前端课程页同步变化</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>发音中心</td><td>字母、声调、易混音、最小对立体、标调规则</td><td>前端发音页同步变化</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>音频管理</td><td>双音色自动生成、试听、重新生成、后台录音、停用</td><td>文本变更后音频状态可追踪、可修复</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>全局配置</td><td>默认音色、自动生成策略</td><td>配置保存后立即影响播放</td></tr>
+        <tr><td><span class="tag tag-p0">P0</span></td><td>回收站</td><td>软删除、依赖检查、恢复</td><td>误删内容可恢复</td></tr>
+        <tr><td><span class="tag tag-p1">P1</span></td><td>批量与历史</td><td>CSV / JSON 批量导入导出、修改历史与回滚、操作日志</td><td>大批量维护与追溯</td></tr>
+        <tr><td><span class="tag tag-p1">P1</span></td><td>音频批处理</td><td>批量重新生成、未使用音频清理</td><td>音频库维护效率</td></tr>
+        <tr><td><span class="tag tag-out">不做</span></td><td>学员侧能力</td><td>学员账号、学习进度云端同步、付费、通知、营销页</td><td>本期不涉及</td></tr>
+        <tr><td><span class="tag tag-out">不做</span></td><td>多租户 / 多语言后台</td><td>多机构隔离、后台国际化</td><td>本期不涉及</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 3 ===== -->
+  <section id="model">
+    <h2><span class="no">3</span>产品模型</h2>
+    <p>后台围绕“内容对象 + 音频资产”组织。对象关系决定删除约束、引用提示与前台页面归属。</p>
+    <table>
+      <thead><tr><th>对象</th><th>当前数量</th><th>关键内容</th><th>关系与后台入口</th></tr></thead>
+      <tbody>
+        <tr><td><strong>单元 Unit</strong></td><td>8</td><td>级别 A1 / A2、顺序、标题、副标题</td><td>包含课程；入口「课程结构」</td></tr>
+        <tr><td><strong>课程 Lesson</strong></td><td>25</td><td>所属单元、顺序、标题、目标、词汇关联、语法、对话、练习</td><td>属于单元；包含句子；入口「课程结构」</td></tr>
+        <tr><td><strong>词条 Vocab</strong></td><td>152</td><td>越南语、中文、词性、汉越、例句、注释、标签</td><td>被课程与句子词块引用；入口「词汇」</td></tr>
+        <tr><td><strong>句子 Sentence</strong></td><td>75</td><td>所属课程、顺序、越南语、中文、句型标签、词块、注释</td><td>属于课程；包含句子练习；入口「句子」</td></tr>
+        <tr><td><strong>句子练习</strong></td><td>—</td><td>挖空、词序、中译越</td><td>挂在句子下；入口「句子」编辑页</td></tr>
+        <tr><td><strong>语法点 GrammarPoint</strong></td><td>—</td><td>标题、讲解、例句、提示</td><td>挂在课程下；入口「课程内容」</td></tr>
+        <tr><td><strong>对话 Dialogue</strong></td><td>—</td><td>标题、说话人、越南语、中文</td><td>挂在课程下；入口「课程内容」</td></tr>
+        <tr><td><strong>课程练习 Exercise</strong></td><td>—</td><td>选择、填空、音频文本、答案、解析</td><td>挂在课程下；入口「课程内容」</td></tr>
+        <tr><td><strong>发音条目</strong></td><td>29 + 6 + 4 + 8 + 4</td><td>字母、声调、易混音组、最小对立体、标调规则</td><td>独立内容；入口「发音中心」</td></tr>
+        <tr><td><strong>音频资产 AudioAsset</strong></td><td>1,060</td><td>朗读文本、音色、来源（自动生成 / 后台录音）、状态、时长、使用位置</td><td>按「文本 + 音色」唯一；入口「音频」</td></tr>
+        <tr><td><strong>全局配置</strong></td><td>—</td><td>默认音色、自动生成策略</td><td>入口「配置」</td></tr>
+      </tbody>
+    </table>
+
+    <h3>关键关系</h3>
+    <div class="flow">
+      <span class="flow-node start">单元</span><span class="flow-arrow">→</span>
+      <span class="flow-node">课程</span><span class="flow-arrow">→</span>
+      <span class="flow-node">句子</span><span class="flow-arrow">→</span>
+      <span class="flow-node">句子练习</span>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <span class="flow-node">课程</span><span class="flow-arrow">→</span>
+      <span class="flow-node">语法 / 对话 / 课程练习</span><span class="flow-arrow">→</span>
+      <span class="flow-node act">可朗读文本</span><span class="flow-arrow">→</span>
+      <span class="flow-node ok">音频资产（女声 + 男声）</span>
+    </div>
+    <p class="flow-note">“可朗读文本”包括词条、例句、句子、词块、语法例句、对话台词、练习音频文本、字母名称、声调示例、易混音示例与最小对立体。只要文本变化，对应音频即进入待更新。</p>
+  </section>
+
+  <!-- ===== 4 ===== -->
+  <section id="flows">
+    <h2><span class="no">4</span>核心流程</h2>
+
+    <h3>4.1 编辑并保存</h3>
+    <div class="flow">
+      <span class="flow-node start">进入列表 / 详情</span><span class="flow-arrow">→</span>
+      <span class="flow-node">编辑字段</span><span class="flow-arrow">→</span>
+      <span class="flow-node">实时校验</span><span class="flow-arrow">→</span>
+      <span class="flow-node act">保存</span><span class="flow-arrow">→</span>
+      <span class="flow-node ok">前端立即生效</span>
+    </div>
+    <p class="flow-note">保存前不写入。保存成功后展示“已保存 · 刚刚”，列表与详情立即更新；若跳转到前端页面，应能看到同一版本。</p>
+
+    <h3>4.2 文本变更后的双音色音频</h3>
+    <div class="flow">
+      <span class="flow-node start">保存可朗读文本</span><span class="flow-arrow">→</span>
+      <span class="flow-node warn">旧音频标记「待更新」</span><span class="flow-arrow">→</span>
+      <span class="flow-node">女声 / 男声进入队列</span><span class="flow-arrow">→</span>
+      <span class="flow-node act">生成中</span><span class="flow-arrow">→</span>
+      <span class="flow-node ok">双音色就绪，替换旧音频</span>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <span class="flow-node">生成中</span><span class="flow-arrow">→</span>
+      <span class="flow-node err">生成失败</span><span class="flow-arrow">→</span>
+      <span class="flow-node">旧音频继续可用 + 重试入口</span>
+    </div>
+    <p class="flow-note">旧音频在新音频就绪前保持可播放，避免学习者中途遇到无声；失败不会自动停用旧音频，但会在总览与音频列表标红。</p>
+
+    <h3>4.3 删除与恢复</h3>
+    <div class="flow">
+      <span class="flow-node start">点击删除</span><span class="flow-arrow">→</span>
+      <span class="flow-node">依赖检查</span><span class="flow-arrow">→</span>
+      <span class="flow-node warn">存在引用：阻止并列出</span>
+    </div>
+    <div class="flow" style="margin-top:8px">
+      <span class="flow-node">无引用</span><span class="flow-arrow">→</span>
+      <span class="flow-node">二次确认</span><span class="flow-arrow">→</span>
+      <span class="flow-node ok">进入回收站</span><span class="flow-arrow">→</span>
+      <span class="flow-node">恢复 / 永久删除</span>
+    </div>
+    <p class="flow-note">删除不会追溯到学员进度；但内容 ID 不复用，避免恢复后与学习记录错位。</p>
+  </section>
+
+  <!-- ===== 5 ===== -->
+  <section id="requirements">
+    <h2><span class="no">5</span>功能需求</h2>
+    <p class="lead">功能需求是本文件的主体。所有模块共享的保存、ID、音频、删除与校验规则统一见第 7 节，本节只描述模块自身行为。</p>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-01</span><span class="fr-title">登录与总览</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>让唯一管理员进入后台，并在一屏内判断“内容是否完整、音频是否健康、今天该处理什么”。</p>
+      <p><span class="label">入口与布局：</span>后台使用独立后台账号与密码登录，不沿用学员账号体系，也不开放注册；账号在项目初始化时创建。未登录访问任何后台页面都先进入登录页，登录后默认进入总览。总览顶部为四个指标卡，下面左侧为“音频健康”，右侧为“最近修改”，底部为快捷操作。</p>
+      <table>
+        <thead><tr><th>区域</th><th>内容</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>内容指标</td><td>单元 / 课程 / 词条 / 句子数量</td><td>点击指标进入对应列表；数量为当前线上数据</td></tr>
+          <tr><td>发音指标</td><td>字母、声调、易混音、最小对立体、标调规则数量</td><td>与发音中心列表一致</td></tr>
+          <tr><td>音频健康</td><td>待生成、生成中、待更新、失败、已停用数量</td><td>点击任一状态跳到音频列表并带上筛选</td></tr>
+          <tr><td>最近修改</td><td>最近 10 条内容及时间、模块、操作</td><td>按保存时间倒序；只显示当前可见数据</td></tr>
+          <tr><td>快捷操作</td><td>新增词条、新增课程、生成缺失音频、打开前端</td><td>“打开前端”在新标签页打开首页</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">异常：</span>加载失败时展示“数据暂时加载失败”与重试按钮，不展示过期缓存；无任何内容时展示“先导入现有内容”的引导。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-02</span><span class="fr-title">课程结构：单元与课程</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>维护前端课程地图、单元页和课程页的层级与顺序。</p>
+      <p><span class="label">列表：</span>单元按 A1、A2 分组，再按顺序排列；每个单元显示标题、副标题、课程数、完成状态（仅用于编辑提示，不展示学员进度）。展开单元可看到课程列表。</p>
+      <table>
+        <thead><tr><th>对象</th><th>字段</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>单元</td><td>ID、级别、顺序、标题、副标题</td><td>ID 创建后不可改；顺序支持拖拽；同级别内顺序唯一</td></tr>
+          <tr><td>课程</td><td>ID、所属单元、顺序、标题、学习目标</td><td>顺序支持拖拽；同一单元内顺序唯一；可移动到其他单元</td></tr>
+          <tr><td>课程关联</td><td>词汇、句子、语法、对话、练习</td><td>通过课程编辑页管理；删除课程前必须先处理其下句子</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">删除约束：</span>单元下仍有课程时不能删除，提示先移动或删除课程；课程下仍有句子时不能删除，提示句子列表。删除进入回收站，恢复时若原顺序已被占用，则追加到末尾并提示。</p>
+      <p><span class="label">结果：</span>保存后课程地图、单元页、课程页立即按新结构展示；移动课程后，旧单元与新单元同时更新。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-03</span><span class="fr-title">词汇库</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>维护 152 个词条及其例句、标签、汉越信息，并让课程与句子能引用同一份词条。</p>
+      <p><span class="label">列表：</span>支持关键词搜索（越南语、中文、ID）、按标签与词性筛选、按音频状态筛选；表格列包含越南语、中文、词性、标签、使用次数、女声 / 男声状态。默认每页 20 条，可切换 50 / 100。</p>
+      <table>
+        <thead><tr><th>字段</th><th>必填</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>ID</td><td>是</td><td>创建时自动建议，允许自定义；保存后不可修改，不可复用</td></tr>
+          <tr><td>越南语</td><td>是</td><td>去首尾空格；为空不可保存；与已有词条重复时提示但允许保存</td></tr>
+          <tr><td>中文</td><td>是</td><td>展示在前端词条释义</td></tr>
+          <tr><td>词性</td><td>是</td><td>名词、动词、形容词、副词、代词、数词、量词、介词、连词、助词、短语</td></tr>
+          <tr><td>汉越</td><td>否</td><td>为空时前端不显示汉越标签</td></tr>
+          <tr><td>例句</td><td>否</td><td>越南语与中文成对填写；只填一边不可保存</td></tr>
+          <tr><td>注释</td><td>否</td><td>前端以 ※ 展示</td></tr>
+          <tr><td>标签</td><td>否</td><td>可多选：核心高频、问候、称谓、数字、时间、家庭、购物、饮食、出行、工作、爱好、语法</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">引用与删除：</span>详情页展示“被哪些课程引用”“被哪些句子词块引用”。被引用时禁止删除，提供“查看引用”跳转；解除引用后可删除，进入回收站。</p>
+      <p><span class="label">结果：</span>保存后词汇页、课程词汇区、句子词块的汉越提示同步更新；修改越南语或例句会触发对应音频进入待更新。</p>
+      <p><span class="label">一致性提示：</span>句子词块与词条是引用关系，不自动同步文本。修改词条越南语时，列出关联词块并询问是否一并更新词块文本；不更新时保留词块原文，但标记为“引用词条文本不一致”，避免前端出现词条与句子写法不同。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-04</span><span class="fr-title">句子与句子练习</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>维护句子的词块拆解与三类练习，保证拆解、答案和音频始终与句子文本一致。</p>
+      <p><span class="label">列表：</span>按课程分组，支持按句型（陈述、疑问、否定、请求、感叹）和音频状态筛选；每行显示句子、中文、句型、词块数、练习数、双音色状态。</p>
+      <p><span class="label">句子编辑：</span>基础字段包含所属课程、顺序、越南语、中文、句型、注释。词块可拖拽排序，每个词块包含越南语、中文、语法角色（主语 / 谓语 / 宾语 / 修饰 / 时间 / 地点 / 语气）与可选词条关联。</p>
+      <table>
+        <thead><tr><th>练习类型</th><th>字段</th><th>校验</th></tr></thead>
+        <tbody>
+          <tr><td>挖空</td><td>被挖空的词块、答案、可接受答案、提示、解析</td><td>词块必须属于当前句子；答案非空；可接受答案去重</td></tr>
+          <tr><td>词序</td><td>正确词块顺序、解析</td><td>顺序必须包含每个词块恰好一次，数量与词块数一致</td></tr>
+          <tr><td>中译越</td><td>参考答案、可接受答案、提示、解析</td><td>答案非空；可接受答案去重</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">联动规则：</span>增加、删除或重排词块后，已有“挖空 / 词序”练习的答案可能失效，保存前必须重新确认；未确认时阻止保存并逐条标出受影响练习。</p>
+      <p><span class="label">文本一致性：</span>保存前校验词块按顺序拼接（空格分隔、忽略首尾标点与多余空格）是否等于句子越南语；不一致时阻止保存，并标出差异位置。避免句子上屏文本与拆解词块、整句音频互相矛盾。</p>
+      <p><span class="label">结果：</span>句子列表、课程句子区、复习牌堆立即更新；句子文本或词块文本变化会触发整句音频待更新。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-05</span><span class="fr-title">课程内容：语法、对话、课程练习</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>在课程编辑页集中维护不属于词条与句子的内容块。</p>
+      <h3>语法点</h3>
+      <table>
+        <thead><tr><th>字段</th><th>必填</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>标题</td><td>是</td><td>课程内可拖拽排序</td></tr>
+          <tr><td>讲解</td><td>是</td><td>支持纯文本；前端按段落展示</td></tr>
+          <tr><td>例句</td><td>否</td><td>越南语与中文成对；每条例句有独立试听按钮</td></tr>
+          <tr><td>提示</td><td>否</td><td>可多条，前端逐条以 ※ 展示</td></tr>
+        </tbody>
+      </table>
+      <h3>对话</h3>
+      <p>对话包含标题与台词列表。台词字段为说话人、越南语、中文，支持拖拽排序。前端“整段朗读”按说话人首次出场顺序交替女声 / 男声；首位说话人使用全局默认音色。管理员不需要逐句指定性别，只需保证说话人名称一致。</p>
+      <h3>课程练习</h3>
+      <table>
+        <thead><tr><th>类型</th><th>字段</th><th>校验</th></tr></thead>
+        <tbody>
+          <tr><td>选择题</td><td>题干、音频文本、选项、正确答案、解析</td><td>至少 2 个选项；正确答案必须指向一个选项；选项去重</td></tr>
+          <tr><td>填空题</td><td>题干、音频文本、答案、可接受答案、提示、解析</td><td>答案非空；可接受答案去重</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">结果：</span>课程页的语法、对话、练习立即更新；对话台词、语法例句与练习音频文本变化会触发双音色音频待更新。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-06</span><span class="fr-title">发音中心</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>维护发音页五个子模块，并保证页面标题中的数量与列表实际数量一致。</p>
+      <div class="grid-2">
+        <div class="card" style="box-shadow:none;background:var(--paper)">
+          <strong>29 个字母</strong>
+          <p class="muted" style="font-size:13px;margin:6px 0 0">字母、名称、IPA、中文近似、注释；名称用于朗读。页面标题改为读取实际数量，不再写死“29”。</p>
+        </div>
+        <div class="card" style="box-shadow:none;background:var(--paper)">
+          <strong>6 个声调</strong>
+          <p class="muted" style="font-size:13px;margin:6px 0 0">名称、调号、示例音节、声调曲线、中文感受、示例词；曲线编辑后即时预览。</p>
+        </div>
+        <div class="card" style="box-shadow:none;background:var(--paper)">
+          <strong>易混音组</strong>
+          <p class="muted" style="font-size:13px;margin:6px 0 0">组标题与组内条目；条目包含音、IPA、中文近似、示例词、注释。</p>
+        </div>
+        <div class="card" style="box-shadow:none;background:var(--paper)">
+          <strong>最小对立体 / 标调规则</strong>
+          <p class="muted" style="font-size:13px;margin:6px 0 0">最小对立体含两个词、两个中文、辨析点；标调规则含标题、正文、示例。</p>
+        </div>
+      </div>
+      <p><span class="label">校验：</span>名称为空不可保存；声调曲线必须是可渲染的 SVG 路径，保存前预览失败则阻止保存；最小对立体必须恰好两个词；标调规则正文不能为空。</p>
+      <p><span class="label">结果：</span>发音页五个区块立即更新；字母名称、声调示例、易混音示例、最小对立体词语变化会触发对应双音色音频待更新。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-07</span><span class="fr-title">音频管理</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>让管理员能看清每条可朗读文本的双音色状态，并在文本变更、生成失败或音色不理想时快速修复。</p>
+      <p><span class="label">列表：</span>按“文本 + 音色”展示；支持搜索文本、按状态（待生成 / 生成中 / 已就绪 / 待更新 / 失败 / 已停用）、按来源（自动生成 / 后台录音）、按使用位置筛选。</p>
+      <table>
+        <thead><tr><th>字段 / 操作</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>朗读文本</td><td>来自内容对象，只读；点击可跳到首个使用位置</td></tr>
+          <tr><td>女声 / 男声</td><td>各自独立状态；可单独试听、重新生成、录音、停用</td></tr>
+          <tr><td>来源</td><td>自动生成或后台录音；录音后仍可重新生成</td></tr>
+          <tr><td>使用位置</td><td>显示引用该文本的内容对象数量与清单</td></tr>
+          <tr><td>重新生成</td><td>生成中保留旧音频；成功后原子替换；失败保留旧音频并标红</td></tr>
+          <tr><td>后台录音</td><td>选择女声或男声 → 麦克风授权 → 录制 → 试听 → 保存替换；支持停止、重录、取消；时长不限</td></tr>
+          <tr><td>停用</td><td>停用后前端不使用该音色，回退到另一音色；两个都停用时回退系统语音</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">自动生成：</span>任何可朗读文本保存后，系统自动为女声、男声分别排队生成，不需要管理员手动触发，也不提供上传入口。同一文本 + 同一音色只保留一个资产，多个引用共享，修改任一引用文本只影响该文本的新资产。</p>
+      <p><span class="label">后台录音：</span>管理员选择女声或男声后点击“录音”，浏览器请求麦克风权限；录制中显示计时与波形，可停止或取消。停止后进入试听确认，保存才替换线上音频；未保存离开时提示确认。录制前暂停其他试听，避免把后台播放声录进去。录音时长不设上限，由管理员手动停止。</p>
+      <p><span class="label">试听：</span>在后台直接播放对应音色；试听不改变状态，也不影响前端正在播放的内容。</p>
+      <p><span class="label">失败与重试：</span>失败展示原因摘要与重试按钮；连续失败在总览汇总，不阻断内容保存。麦克风权限被拒绝、无输入设备或录音解码失败时，保留原音频并提示检查设备后重试。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-08</span><span class="fr-title">全局配置</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>只保留真正需要调整的播放配置；生成策略与兜底策略固定，避免后台出现“关了开关导致无声”的状态。</p>
+      <table>
+        <thead><tr><th>配置项</th><th>可选值</th><th>生效规则</th></tr></thead>
+        <tbody>
+          <tr><td>默认音色</td><td>女声 / 男声</td><td>影响普通朗读与对话首位说话人；保存后下一次播放生效</td></tr>
+          <tr><td>文本自动生成音频</td><td>固定开启</td><td>任何可朗读文本保存后自动生成女声、男声，不提供关闭</td></tr>
+          <tr><td>音频缺失时前端兜底</td><td>固定开启</td><td>兜底顺序：当前音色音频 → 另一音色音频 → 浏览器系统语音</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">结果：</span>配置保存后立即写入线上；播放中的音频不被打断，下一次朗读使用新配置。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-09</span><span class="fr-title">初始化导入</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>把现有静态内容与 1,060 个双音色音频一次性迁入持久化数据，保证后台看到的就是前端当前内容。</p>
+      <table>
+        <thead><tr><th>内容</th><th>预期数量</th><th>核对方式</th></tr></thead>
+        <tbody>
+          <tr><td>单元 / 课程</td><td>8 / 25</td><td>ID、顺序、标题逐项比对</td></tr>
+          <tr><td>词条 / 句子</td><td>152 / 75</td><td>ID、越南语、中文、引用关系比对</td></tr>
+          <tr><td>发音中心</td><td>29 / 6 / 4 / 8 / 4</td><td>五个子模块数量与内容比对</td></tr>
+          <tr><td>音频</td><td>1,060</td><td>文本 × 音色数量；抽样试听女声 / 男声</td></tr>
+        </tbody>
+      </table>
+      <p><span class="label">规则：</span>导入按 ID 幂等；重复执行不产生重复数据。部分失败时展示逐条失败原因，可只重试失败项。项目仍在开发中，初始化后后台数据即作为前端唯一数据源，不设计线上切换、维护窗口或回滚流程。</p>
+      <p><span class="label">结果：</span>总览数量与上表一致；后台可搜索、编辑、试听全部现有内容；前端页面与导入前一致。</p>
+    </div>
+
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">FR-10</span><span class="fr-title">回收站与恢复</span><span class="tag tag-p0">P0</span></div>
+      <p><span class="label">目的：</span>在“保存立即生效”的前提下，为误删提供可逆路径。</p>
+      <p>回收站按对象类型分组，展示删除时间、删除前位置、引用状态。恢复前再次检查依赖：若父级已被删除，需先恢复父级或选择新的归属。恢复后若原顺序被占用，追加到末尾并提示。</p>
+      <p><span class="label">永久删除：</span>仅管理员可操作，需二次确认并展示影响范围；开发阶段不设自动清理，回收站内容长期保留。</p>
+    </div>
+  </section>
+
+  <!-- ===== 6 ===== -->
+  <section id="demo">
+    <h2><span class="no">6</span>交互预览</h2>
+    <p class="lead">演示聚焦 P0 中最容易出错的组合：词汇编辑、保存立即生效、文本变更后双音色音频进入待更新，以及重新生成后的状态恢复。</p>
+    <div class="demo">
+      <div class="demo-top"><strong>演示：词汇编辑与音频状态</strong><span>·</span><span>演示数据，非真实后台</span><span>·</span><span>不写入任何内容</span></div>
+      <div class="demo-body">
+        <aside class="demo-side">
+          <div class="demo-nav">
+            <button type="button" data-nav="总览">总览</button>
+            <button type="button" data-nav="课程结构">课程结构</button>
+            <button type="button" data-nav="词汇" class="on">词汇</button>
+            <button type="button" data-nav="句子">句子</button>
+            <button type="button" data-nav="发音中心">发音中心</button>
+            <button type="button" data-nav="音频">音频</button>
+            <button type="button" data-nav="配置">配置</button>
+          </div>
+          <p class="demo-note">演示只覆盖「词汇 + 音频」。其余模块的行为见第 5 节。</p>
+        </aside>
+        <div class="demo-main">
+          <div class="demo-toolbar">
+            <input id="demoSearch" class="demo-search" type="search" placeholder="搜索越南语 / 中文 / ID" aria-label="搜索词条">
+            <select id="demoFilter" class="demo-select" aria-label="音频状态筛选">
+              <option value="all">全部音频状态</option>
+              <option value="stale">有音频待更新</option>
+              <option value="ready">双音色已就绪</option>
+              <option value="fail">有生成失败</option>
+            </select>
+            <button id="demoNew" class="demo-btn primary" type="button">新增词条</button>
+          </div>
+          <div class="demo-workspace">
+            <div class="demo-table-wrap">
+              <table class="demo-table">
+                <thead><tr><th>ID</th><th>越南语</th><th>中文</th><th>女声</th><th>男声</th><th>操作</th></tr></thead>
+                <tbody id="demoRows"></tbody>
+              </table>
+              <div id="demoEmpty" class="demo-empty" hidden>没有匹配的词条。换个关键词或筛选条件试试。</div>
+            </div>
+            <aside class="demo-panel" id="demoPanel">
+              <div class="demo-empty">选择左侧一条词条，查看编辑与音频状态。</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="muted" style="font-size:12.5px;margin-top:10px">演示对应需求：FR-03 词汇库、FR-07 音频管理、S-01 保存即生效、S-03 / S-04 音频生命周期、S-11 录音约束。演示不提供上传；录音不调用麦克风，“试听”使用浏览器系统语音，仅用于交互示意。</p>
+  </section>
+
+  <!-- ===== 7 ===== -->
+  <section id="rules">
+    <h2><span class="no">7</span>共享规则</h2>
+    <p>以下规则在多个模块复用，功能章节不再重复定义。</p>
+    <table class="rule-table">
+      <thead><tr><th>编号</th><th>规则</th><th>具体行为</th></tr></thead>
+      <tbody>
+        <tr><td>S-01</td><td>保存立即生效</td><td>保存前实时校验；成功后写入线上并立即对前端生效。展示“已保存 · 刚刚”，列表与详情同步刷新。无草稿、无审批。保存失败保留已填内容并提示重试。</td></tr>
+        <tr><td>S-02</td><td>ID 稳定</td><td>内容创建时生成建议 ID，允许自定义；保存后不可修改、不可复用。删除后 ID 不释放，避免学员进度与内容错位。</td></tr>
+        <tr><td>S-03</td><td>音频生命周期</td><td>状态为：待生成 → 生成中 → 已就绪；文本变化后进入待更新；生成失败进入失败；管理员可停用。停用不删除资产。</td></tr>
+        <tr><td>S-04</td><td>文本变更触发音频更新</td><td>任何可朗读文本保存后，女声与男声同时进入待更新并排队生成；旧音频在新音频就绪前继续服务前端。</td></tr>
+        <tr><td>S-05</td><td>同名文本复用音频</td><td>同一“文本 + 音色”只保留一个音频资产，多处引用共享；音频详情展示全部使用位置。</td></tr>
+        <tr><td>S-06</td><td>播放回退</td><td>音频缺失、待生成、生成失败或停用时，前端按“当前音色音频 → 另一音色音频 → 浏览器系统语音”依次回退；两个音色都不可用时使用系统语音。</td></tr>
+        <tr><td>S-07</td><td>删除与依赖</td><td>有子级或被引用的内容禁止直接删除；先解除引用或处理子级。无依赖内容软删除进入回收站，可恢复。</td></tr>
+        <tr><td>S-08</td><td>并发编辑</td><td>打开编辑后若该记录已被其他标签页保存，本次保存被阻止，展示“内容已更新，请刷新后重新编辑”。不允许静默覆盖。</td></tr>
+        <tr><td>S-09</td><td>保存前校验</td><td>必填、唯一性、范围、引用、练习答案与 SVG 路径均在保存前校验；句子词块拼接必须与句子越南语一致；错误定位到具体字段并保持滚动位置。</td></tr>
+        <tr><td>S-10</td><td>列表行为</td><td>搜索匹配越南语、中文、ID 或标题；筛选条件可组合；显示结果数；无结果展示空态；分页默认 20 条，可切换 50 / 100。</td></tr>
+        <tr><td>S-11</td><td>录音约束</td><td>录音需麦克风授权，录制中显示计时与波形，停止后先试听再保存；单条录音不设时长上限，由管理员手动停止；录音替换不改变朗读文本，只改变音色来源；本期不提供音频上传。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 8 ===== -->
+  <section id="visual">
+    <h2><span class="no">8</span>视觉与布局</h2>
+    <p>后台与前端共用一套设计变量。区别是后台减少插画与装饰，保留纸张、墨线、硬投影和暖色，让密集表格仍然“像同一本手账”，但不干扰长时间编辑。</p>
+
+    <h3>8.1 设计变量</h3>
+    <table>
+      <thead><tr><th>变量</th><th>值</th><th>后台用法</th></tr></thead>
+      <tbody>
+        <tr><td>纸张底色</td><td>#FBF3E4</td><td>页面背景，叠加极淡网点</td></tr>
+        <tr><td>卡片底色</td><td>#FFFDF6</td><td>表格、表单、面板</td></tr>
+        <tr><td>墨色</td><td>#2E1F12</td><td>正文、主描边、按钮文字</td></tr>
+        <tr><td>橘色</td><td>#E8622C</td><td>主操作、当前导航、强调状态</td></tr>
+        <tr><td>青色</td><td>#1AA6A0</td><td>音频、次级操作、链接</td></tr>
+        <tr><td>黄色</td><td>#F5D44F</td><td>待更新、提示、选中行</td></tr>
+        <tr><td>成功 / 失败</td><td>#2F8F5B / #C0392B</td><td>已就绪 / 失败、删除等危险操作</td></tr>
+        <tr><td>圆角</td><td>22 / 14 / 10</td><td>大卡片 / 面板 / 输入控件</td></tr>
+        <tr><td>描边与投影</td><td>2.5px 墨线；2–6px 硬投影</td><td>按钮、卡片、抽屉；表格行分隔改用浅线，避免视觉噪音</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.2 布局</h3>
+    <div class="wire">
+      <div class="wire-side">
+        <div class="on">总览</div><div>课程结构</div><div>词汇</div><div>句子</div><div>发音中心</div><div>音频</div><div>配置</div>
+      </div>
+      <div class="wire-main">
+        <div class="wire-top"><div class="wire-bar" style="flex:2">页面标题 / 面包屑</div><div class="wire-bar">搜索</div><div class="wire-bar" style="flex:0 0 90px">管理员</div></div>
+        <div class="wire-grid">
+          <div class="wire-box dark">筛选栏<br><span style="font-size:11px">关键词 · 模块 · 状态 · 分页</span></div>
+          <div class="wire-box dark">操作区<br><span style="font-size:11px">新增 · 批量 · 保存</span></div>
+          <div class="wire-box" style="grid-column:1/-1;min-height:120px">主列表 / 表单区<br><span style="font-size:11px">高密度表格；编辑页左侧表单、右侧预览与音频面板</span></div>
+          <div class="wire-box" style="grid-column:1/-1">底部固定保存栏：取消 · 预览 · 保存并立即生效</div>
+        </div>
+      </div>
+    </div>
+    <p class="flow-note">桌面优先：侧边栏 176–220px，内容区最大 1280px；宽度小于 820px 时侧边栏折叠为顶部菜单，表格横向滚动。复杂编辑不保证手机端可用，手机端至少可查看列表与详情。</p>
+
+    <h3>8.3 组件与交互</h3>
+    <ul>
+      <li><strong>导航：</strong>左侧固定，当前项使用橘色浅底 + 深橘文字；每项可显示待处理数量。</li>
+      <li><strong>表格：</strong>浅色行分隔，悬停整行浅黄，选中行浅橘；状态使用彩色 chip，不使用整行染色。</li>
+      <li><strong>表单：</strong>两列栅格；必填星号；错误红框 + 字段下方说明；保存栏固定在视口底部。</li>
+      <li><strong>音频面板：</strong>女声 / 男声两条独立行，状态、试听、录音、重新生成、停用并列展示；录音时显示计时、波形与停止按钮，停止后进入试听确认。</li>
+      <li><strong>反馈：</strong>保存成功用屏幕居中 toast，避开底部保存栏；失败在表单顶部展示错误摘要并定位第一个错误；删除确认使用墨线描边弹窗，危险按钮为红色。</li>
+      <li><strong>克制原则：</strong>后台不使用吉卜力背景图、贴纸、盖章动效；保留纸张底色、墨线、圆角与硬投影，使风格连续但更安静。</li>
+    </ul>
+  </section>
+
+  <!-- ===== 9 ===== -->
+  <section id="states">
+    <h2><span class="no">9</span>状态、空态与异常</h2>
+    <table>
+      <thead><tr><th>场景</th><th>界面表现</th><th>可执行动作</th></tr></thead>
+      <tbody>
+        <tr><td>首次进入，尚无数据</td><td>总览展示导入引导与预期数量</td><td>开始初始化导入</td></tr>
+        <tr><td>列表无搜索结果</td><td>空态插画 + “没有匹配内容”</td><td>清除筛选 / 换个关键词</td></tr>
+        <tr><td>课程下无句子 / 单元下无课程</td><td>对应区块空态，不影响其他内容</td><td>新增子项 / 返回列表</td></tr>
+        <tr><td>音频待生成</td><td>黄色 chip「待生成」</td><td>立即生成 / 等待</td></tr>
+        <tr><td>音频生成中</td><td>青色 chip「生成中」，按钮禁用</td><td>等待；可离开页面</td></tr>
+        <tr><td>音频待更新</td><td>黄色 chip「待更新」，旧音频仍可试听</td><td>重新生成 / 录音</td></tr>
+        <tr><td>音频生成失败</td><td>红色 chip「失败」+ 原因摘要</td><td>重试 / 录音 / 停用</td></tr>
+        <tr><td>保存失败</td><td>表单顶部错误摘要，已填内容保留</td><td>重试 / 检查网络</td></tr>
+        <tr><td>并发编辑冲突</td><td>弹窗“内容已更新”，展示最后更新时间</td><td>刷新并重新编辑</td></tr>
+        <tr><td>麦克风权限被拒绝</td><td>录音区提示“未获得麦克风权限”</td><td>重新授权 / 检查系统设置</td></tr>
+        <tr><td>无可用输入设备</td><td>录音按钮禁用并说明原因</td><td>连接麦克风后重试</td></tr>
+        <tr><td>录音中 / 录音待保存</td><td>计时与波形；停止后显示试听、保存、重录、取消</td><td>保存替换 / 重录 / 取消</td></tr>
+        <tr><td>删除被阻止</td><td>列出子级 / 引用清单与跳转链接</td><td>查看引用 / 先解除依赖</td></tr>
+        <tr><td>导入部分失败</td><td>数量核对表 + 失败条目清单</td><td>只重试失败项 / 导出错误报告</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== 10 ===== -->
+  <section id="open">
+    <h2><span class="no">10</span>已确认决策</h2>
+    <p>以下决策已确认，并写入对应功能与共享规则；如后续改变，需要同步更新 FR-07、FR-08、FR-09、S-06 与 S-11。</p>
+    <table>
+      <thead><tr><th>决策</th><th>内容</th><th>对需求的影响</th></tr></thead>
+      <tbody>
+        <tr><td>管理员登录</td><td>使用独立后台账号与密码，不沿用学员账号体系，不开放注册；后台只有一个管理员账号。</td><td>登录页独立；不做角色、审批与注册找回。</td></tr>
+        <tr><td>音频来源</td><td>不提供音频上传。任何可朗读文本保存后，系统自动生成女声与男声；保留后台录音替换能力。</td><td>音频来源只有“自动生成”和“后台录音”；删除上传相关入口与校验。</td></tr>
+        <tr><td>生成失败兜底</td><td>不建设备用音色服务。后台没有音频、生成失败或音色被停用时，前端按“当前音色 → 另一音色 → 浏览器系统语音”兜底。</td><td>生成失败不阻断内容保存；前端始终有声音。</td></tr>
+        <tr><td>上线方式</td><td>项目仍在开发中，不考虑上线切换、维护窗口或回滚流程。</td><td>初始化导入后，后台数据直接作为前端唯一数据源。</td></tr>
+        <tr><td>录音时长</td><td>单条录音不设时长上限，由管理员手动停止。</td><td>不做录音超时自动停止与超时提示。</td></tr>
+        <tr><td>默认语速</td><td>暂不提供后台配置，沿用前端现有朗读语速。</td><td>全局配置只保留默认音色与固定生成 / 兜底策略。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const STATUS = {
+    ready: { label: '已就绪', cls: 'st-ready' },
+    stale: { label: '待更新', cls: 'st-stale' },
+    generating: { label: '生成中', cls: 'st-gen' },
+    fail: { label: '失败', cls: 'st-fail' },
+    disabled: { label: '已停用', cls: 'st-off' },
+  };
+
+  const rows = [
+    { id: 'u1-01', vi: 'chữ cái', zh: '字母', pos: '名词', tags: '语法', female: 'ready', male: 'ready' },
+    { id: 'u1-02', vi: 'thanh điệu', zh: '声调', pos: '名词', tags: '语法', female: 'ready', male: 'ready' },
+    { id: 'u2-03', vi: 'cảm ơn', zh: '谢谢', pos: '动词', tags: '问候 / 核心', female: 'stale', male: 'stale' },
+    { id: 'u6-03', vi: 'phở', zh: '河粉', pos: '名词', tags: '饮食', female: 'ready', male: 'fail' },
+    { id: 'u7-15', vi: 'khách sạn', zh: '酒店', pos: '名词', tags: '出行', female: 'disabled', male: 'ready' },
+  ];
+
+  const tableBody = document.getElementById('demoRows');
+  const empty = document.getElementById('demoEmpty');
+  const search = document.getElementById('demoSearch');
+  const filter = document.getElementById('demoFilter');
+  const panel = document.getElementById('demoPanel');
+  const toastEl = document.getElementById('toast');
+
+  let selectedId = null;
+  let originalVi = '';
+  let toastTimer = null;
+  let recTimer = null;
+
+  function esc(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[ch]));
+  }
+
+  function chip(state) {
+    const item = STATUS[state] || STATUS.stale;
+    return `<span class="status ${item.cls}">${item.label}</span>`;
+  }
+
+  function audioPair(row) {
+    return `<span class="st-both">${chip(row.female)}${chip(row.male)}</span>`;
+  }
+
+  function matches(row) {
+    const q = search.value.trim().toLowerCase();
+    if (q && !`${row.id} ${row.vi} ${row.zh}`.toLowerCase().includes(q)) return false;
+    if (filter.value === 'stale' && row.female !== 'stale' && row.male !== 'stale') return false;
+    if (filter.value === 'ready' && (row.female !== 'ready' || row.male !== 'ready')) return false;
+    if (filter.value === 'fail' && row.female !== 'fail' && row.male !== 'fail') return false;
+    return true;
+  }
+
+  function renderTable() {
+    const visible = rows.filter(matches);
+    tableBody.innerHTML = visible.map((row) => `
+      <tr data-id="${esc(row.id)}" class="${row.id === selectedId ? 'on' : ''}">
+        <td>${esc(row.id)}</td>
+        <td class="demo-vi">${esc(row.vi)}</td>
+        <td>${esc(row.zh)}</td>
+        <td>${chip(row.female)}</td>
+        <td>${chip(row.male)}</td>
+        <td><button class="demo-btn" type="button" data-open="${esc(row.id)}">编辑</button></td>
+      </tr>
+    `).join('');
+    empty.hidden = visible.length > 0;
+    Array.from(tableBody.querySelectorAll('tr')).forEach((tr) => {
+      tr.addEventListener('click', () => selectRow(tr.dataset.id));
+    });
+    Array.from(tableBody.querySelectorAll('[data-open]')).forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        selectRow(button.dataset.open);
+      });
+    });
+  }
+
+  function showToast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function audioRow(row, key, label) {
+    const state = row[key];
+    return `
+      <div class="demo-audio-row" data-voice="${key}">
+        <div>
+          <div class="demo-audio-name">${label}</div>
+          ${chip(state)}
+        </div>
+        <div class="demo-actions" style="margin-top:0">
+          <button class="demo-btn" type="button" data-act="listen" data-voice="${key}">试听</button>
+          <button class="demo-btn" type="button" data-act="record" data-voice="${key}" ${state === 'generating' ? 'disabled' : ''}>录音</button>
+          <button class="demo-btn teal" type="button" data-act="regen" data-voice="${key}" ${state === 'generating' ? 'disabled' : ''}>重新生成</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function recTime(seconds) {
+    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const ss = String(seconds % 60).padStart(2, '0');
+    return mm + ':' + ss;
+  }
+
+  function speakDemo(text) {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'vi-VN';
+    u.rate = 0.88;
+    const voiceObj = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith('vi'));
+    if (voiceObj) u.voice = voiceObj;
+    speechSynthesis.speak(u);
+  }
+
+  function startRecording(rowNow, voice) {
+    if (recTimer) { clearInterval(recTimer); recTimer = null; }
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    let seconds = 0;
+    panel.innerHTML = `
+      <h4>录音 · ${voice === 'female' ? '女声' : '男声'}</h4>
+      <p class="demo-note" style="margin-top:-4px">词条：<span class="demo-vi">${esc(rowNow.vi)}</span></p>
+      <div class="demo-recorder">
+        <div class="demo-rec-time" id="recTime">00:00</div>
+        <div class="demo-rec-wave" aria-hidden="true">${'<i></i>'.repeat(14)}</div>
+        <div class="demo-actions">
+          <button class="demo-btn primary" type="button" id="recStop">停止录音</button>
+          <button class="demo-btn" type="button" id="recCancel">取消</button>
+        </div>
+        <p class="demo-note">演示不调用麦克风；真实后台会请求麦克风授权并录制，录制前会暂停其他试听。</p>
+      </div>
+    `;
+    recTimer = setInterval(() => {
+      seconds += 1;
+      const timeEl = document.getElementById('recTime');
+      if (timeEl) timeEl.textContent = recTime(seconds);
+    }, 1000);
+    document.getElementById('recStop').addEventListener('click', () => {
+      if (recTimer) { clearInterval(recTimer); recTimer = null; }
+      showRecordingReview(rowNow, voice, seconds);
+    });
+    document.getElementById('recCancel').addEventListener('click', () => {
+      if (recTimer) { clearInterval(recTimer); recTimer = null; }
+      selectRow(rowNow.id);
+      showToast('已取消录音');
+    });
+  }
+
+  function showRecordingReview(rowNow, voice, seconds) {
+    panel.innerHTML = `
+      <h4>录音完成 · ${voice === 'female' ? '女声' : '男声'}</h4>
+      <p class="demo-note" style="margin-top:-4px">词条：<span class="demo-vi">${esc(rowNow.vi)}</span></p>
+      <div class="demo-recorder">
+        <div class="demo-rec-time">${recTime(Math.max(seconds, 1))}</div>
+        <div class="demo-rec-wave" aria-hidden="true">${'<i></i>'.repeat(14)}</div>
+        <div class="demo-actions">
+          <button class="demo-btn" type="button" id="recPlay">试听</button>
+          <button class="demo-btn primary" type="button" id="recSave">保存并替换</button>
+          <button class="demo-btn" type="button" id="recAgain">重录</button>
+          <button class="demo-btn" type="button" id="recCancel2">取消</button>
+        </div>
+        <p class="demo-note">保存后才替换线上音频；取消或离开不会改变现有音频。</p>
+      </div>
+    `;
+    document.getElementById('recPlay').addEventListener('click', () => {
+      speakDemo(rowNow.vi);
+      showToast('试听录音（演示）');
+    });
+    document.getElementById('recSave').addEventListener('click', () => {
+      rowNow[voice] = 'ready';
+      renderTable();
+      selectRow(rowNow.id);
+      showToast((voice === 'female' ? '女声' : '男声') + '录音已保存并替换线上音频');
+    });
+    document.getElementById('recAgain').addEventListener('click', () => startRecording(rowNow, voice));
+    document.getElementById('recCancel2').addEventListener('click', () => {
+      selectRow(rowNow.id);
+      showToast('已取消录音');
+    });
+  }
+
+  function selectRow(id) {
+    const row = rows.find((item) => item.id === id);
+    if (!row) return;
+    if (recTimer) { clearInterval(recTimer); recTimer = null; }
+    selectedId = id;
+    originalVi = row.vi;
+    renderTable();
+    panel.innerHTML = `
+      <h4>编辑词条 <span class="muted" style="font-weight:400">${esc(row.id)}</span></h4>
+      <div class="demo-field">
+        <label>越南语（修改会触发双音色待更新）</label>
+        <input class="demo-input vi" id="dVi" value="${esc(row.vi)}">
+      </div>
+      <div class="demo-field">
+        <label>中文</label>
+        <input class="demo-input" id="dZh" value="${esc(row.zh)}">
+      </div>
+      <div class="demo-field">
+        <label>词性 / 标签</label>
+        <input class="demo-input" id="dMeta" value="${esc(row.pos)} · ${esc(row.tags)}">
+      </div>
+      <div style="margin:10px 0 4px;font-weight:800;font-size:12.5px">双音色音频</div>
+      ${audioRow(row, 'female', '女声')}
+      ${audioRow(row, 'male', '男声')}
+      <div class="demo-actions">
+        <button class="demo-btn primary" type="button" id="dSave">保存并立即生效</button>
+        <button class="demo-btn" type="button" id="dCancel">清空选择</button>
+      </div>
+      <p class="demo-note">对应 S-01、S-03、S-04：保存后文本立即生效；文本变化时旧音频仍可播放，新音频生成完成后替换。</p>
+    `;
+
+    const viInput = document.getElementById('dVi');
+    const zhInput = document.getElementById('dZh');
+    viInput.addEventListener('input', () => {
+      if (viInput.value.trim() !== originalVi && row.female !== 'generating' && row.male !== 'generating') {
+        row.female = 'stale';
+        row.male = 'stale';
+        renderTable();
+        const femaleState = panel.querySelector('[data-voice="female"] .status');
+        const maleState = panel.querySelector('[data-voice="male"] .status');
+        if (femaleState) { femaleState.className = 'status st-stale'; femaleState.textContent = '待更新'; }
+        if (maleState) { maleState.className = 'status st-stale'; maleState.textContent = '待更新'; }
+      }
+    });
+
+    document.getElementById('dSave').addEventListener('click', () => {
+      const nextVi = viInput.value.trim();
+      if (!nextVi) { showToast('越南语不能为空'); viInput.focus(); return; }
+      row.vi = nextVi;
+      row.zh = zhInput.value.trim() || row.zh;
+      originalVi = row.vi;
+      const changed = row.female === 'stale' || row.male === 'stale';
+      renderTable();
+      selectRow(row.id);
+      showToast(changed ? '已保存并立即生效；双音色音频生成中' : '已保存并立即生效');
+      if (changed) {
+        const current = rows.find((item) => item.id === row.id);
+        current.female = 'generating';
+        current.male = 'generating';
+        renderTable();
+        selectRow(current.id);
+        setTimeout(() => {
+          const latest = rows.find((item) => item.id === current.id);
+          if (!latest) return;
+          if (latest.female === 'generating') latest.female = 'ready';
+          if (latest.male === 'generating') latest.male = 'ready';
+          renderTable();
+          if (selectedId === latest.id) selectRow(latest.id);
+          showToast('女声、男声音频已更新');
+        }, 1500);
+      }
+    });
+
+    document.getElementById('dCancel').addEventListener('click', () => {
+      selectedId = null;
+      panel.innerHTML = '<div class="demo-empty">选择左侧一条词条，查看编辑与音频状态。</div>';
+      renderTable();
+    });
+
+    panel.querySelectorAll('[data-act]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const voice = button.dataset.voice;
+        const act = button.dataset.act;
+        const rowNow = rows.find((item) => item.id === selectedId);
+        if (!rowNow) return;
+        if (act === 'listen') {
+          speakDemo(rowNow.vi);
+          showToast('试听：浏览器系统语音（演示）');
+        }
+        if (act === 'record') {
+          startRecording(rowNow, voice);
+        }
+        if (act === 'regen') {
+          rowNow[voice] = 'generating';
+          renderTable();
+          selectRow(rowNow.id);
+          showToast(voice === 'female' ? '女声重新生成中' : '男声重新生成中');
+          setTimeout(() => {
+            const latest = rows.find((item) => item.id === rowNow.id);
+            if (!latest) return;
+            latest[voice] = 'ready';
+            renderTable();
+            if (selectedId === latest.id) selectRow(latest.id);
+            showToast(voice === 'female' ? '女声已更新' : '男声已更新');
+          }, 1300);
+        }
+      });
+    });
+  }
+
+  document.getElementById('demoNew').addEventListener('click', () => {
+    showToast('演示版不新增数据；真实后台会打开新建表单');
+  });
+
+  document.querySelectorAll('[data-nav]').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-nav]').forEach((item) => item.classList.remove('on'));
+      button.classList.add('on');
+      if (button.dataset.nav !== '词汇') {
+        showToast('演示只覆盖词汇与音频；' + button.dataset.nav + ' 模块见第 5 节');
+      }
+    });
+  });
+
+  search.addEventListener('input', renderTable);
+  filter.addEventListener('change', renderTable);
+  renderTable();
+</script>
+</body>
+</html>
