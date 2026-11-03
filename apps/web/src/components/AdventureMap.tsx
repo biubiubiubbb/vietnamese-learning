@@ -1,26 +1,12 @@
 import { Link } from 'react-router-dom';
 import { UNITS, unitProgress } from '../content/curriculum';
+import { MAP_W, MAP_H, nodePosition } from '../lib/mapPositions';
 import { useProgress } from './ProgressContext';
 
 /**
  * 课程登山地图：从山脚营地出发，沿 Z 字形山道爬向山顶。
  * 每个单元是一个营地；桌面按山势排布，窄屏退化为单列竖路径。
  */
-
-const MAP_W = 1050;
-const MAP_H = 720;
-
-/** 八个营地在山体上的坐标：沿折返山道自下而上 */
-const POS: Array<[number, number]> = [
-  [300, 620],
-  [540, 605],
-  [755, 560],
-  [620, 505],
-  [420, 450],
-  [540, 395],
-  [675, 335],
-  [555, 255],
-];
 
 /** 岛屿图标：每单元一个宫崎骏式小物（粗描边手绘 SVG） */
 function IslandIcon({ unitId, color }: { unitId: string; color: string }) {
@@ -106,7 +92,7 @@ export default function AdventureMap() {
   const nodes = UNITS.map((u, i) => {
     const { done, total } = unitProgress(u, state.completedLessons);
     const st: NodeState = done === total ? 'done' : done > 0 || i === 0 || unitProgress(UNITS[i - 1], state.completedLessons).done === UNITS[i - 1].lessonIds.length ? 'current' : 'locked';
-    const [x, y] = POS[i];
+    const [x, y] = nodePosition(i);
     return { unit: u, done, total, st, x, y, i };
   });
 

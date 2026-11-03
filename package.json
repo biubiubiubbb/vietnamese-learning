@@ -13,6 +13,7 @@
     "dev:admin": "npm run dev -w @viet/admin",
     "build": "npm run build -w @viet/api && npm run build -w @viet/web && npm run build -w @viet/admin",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test -w @viet/web",
     "start": "npm run start -w @viet/api",
     "audio:generate": "npm run audio:generate -w @viet/api"
   },

@@ -99,7 +99,8 @@ export default function LessonPracticePage() {
   const [lessonAnswers, setLessonAnswers] = useState<Record<string, boolean>>({});
 
   if (!lesson) return <Navigate to="/learn" replace />;
-  const unit = unitOfLesson(lesson)!;
+  const unit = unitOfLesson(lesson);
+  if (!unit) return <Navigate to="/learn" replace />;
   const next = getNextLesson(lesson.id);
   const isDone = state.completedLessons.includes(lesson.id);
 
