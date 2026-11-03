@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { UNITS, unitProgress } from '../content/curriculum';
-import { MAP_W, MAP_H, nodePosition } from '../lib/mapPositions';
+import { MAP_W, MAP_H, nodePosition, buildMountainPath } from '../lib/mapPositions';
 import { useProgress } from './ProgressContext';
 
 /**
@@ -89,6 +89,15 @@ const STATE_COLOR: Record<NodeState, string> = {
 export default function AdventureMap() {
   const { state } = useProgress();
 
+  if (UNITS.length === 0) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: 48 }}>
+        <strong style={{ fontSize: 18 }}>还没有课程单元</strong>
+        <p className="muted mt8">请先在后台创建单元与课程。</p>
+      </div>
+    );
+  }
+
   const nodes = UNITS.map((u, i) => {
     const { done, total } = unitProgress(u, state.completedLessons);
     const st: NodeState = done === total ? 'done' : done > 0 || i === 0 || unitProgress(UNITS[i - 1], state.completedLessons).done === UNITS[i - 1].lessonIds.length ? 'current' : 'locked';
@@ -98,16 +107,7 @@ export default function AdventureMap() {
 
   // 山道：沿山体折返向上，最后一段从最高营地冲顶
   const pts = nodes.map((n) => [n.x, n.y] as const);
-  let pathD = `M ${pts[0][0]} ${pts[0][1]}`;
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1];
-    const [x1, y1] = pts[i];
-    const dir = x1 >= x0 ? 1 : -1;
-    const bend = Math.abs(x1 - x0) > 260 ? 70 : 45;
-    pathD += ` C ${x0 + dir * bend} ${y0}, ${x1 - dir * bend} ${y1}, ${x1} ${y1}`;
-  }
-  const [lastX, lastY] = pts[pts.length - 1];
-  pathD += ` C ${lastX - 20} ${lastY - 40}, 560 165, 560 128`;
+  const pathD = buildMountainPath(pts);
 
   return (
     <div className="adventure-map" role="list" aria-label="课程登山地图">

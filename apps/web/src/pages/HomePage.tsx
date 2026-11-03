@@ -10,6 +10,16 @@ import ProgressBar from '../components/ProgressBar';
 export default function HomePage() {
   const { state } = useProgress();
   const nextLesson = LESSONS.find((l) => !state.completedLessons.includes(l.id)) ?? LESSONS[0];
+  if (!nextLesson) {
+    return (
+      <div className="container" style={{ paddingTop: 44, paddingBottom: 60 }}>
+        <div className="card" style={{ textAlign: 'center', padding: 48 }}>
+          <strong style={{ fontSize: 18 }}>还没有课程</strong>
+          <p className="muted mt8">请先在后台创建单元与课程。</p>
+        </div>
+      </div>
+    );
+  }
   const doneCount = state.completedLessons.length;
   const dueWord = Math.min(dueCards(state, VOCAB_IDS).length, 20);
   const dueSentence = Math.min(dueSentences(state, SENTENCE_IDS).length, 20);
