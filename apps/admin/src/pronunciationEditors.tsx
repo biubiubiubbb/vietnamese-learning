@@ -204,7 +204,7 @@ export function PronunciationSaveButton({
   return (
     <div style={{ marginTop: 14 }}>
       <Button variant="primary" onClick={onSave} disabled={saving}>
-        {saving ? '保存中…' : '保存全部并立即生效'}
+        {saving ? '保存中…' : '保存'}
       </Button>
     </div>
   );

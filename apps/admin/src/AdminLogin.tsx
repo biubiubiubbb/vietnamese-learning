@@ -49,7 +49,6 @@ export default function AdminLogin() {
           />
         </svg>
         <h1>越语学堂 · 内容中后台</h1>
-        <p>独立后台账号登录。课程、词汇、句子与音频都在这里照料。</p>
         {error && <Banner tone="err">{error}</Banner>}
         <Field label="账号">
           <TextInput value={username} onChange={setUsername} placeholder="admin" />
@@ -60,9 +59,6 @@ export default function AdminLogin() {
         <Button variant="primary" onClick={submit} disabled={loading}>
           {loading ? '登录中…' : '登录'}
         </Button>
-        <p className="muted" style={{ fontSize: 11.5, marginTop: 12, marginBottom: 0 }}>
-          默认账号 admin / admin123
-        </p>
       </div>
     </div>
   );

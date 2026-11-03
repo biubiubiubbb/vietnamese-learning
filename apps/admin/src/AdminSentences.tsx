@@ -88,7 +88,7 @@ export default function AdminSentences() {
       } else {
         await api.post('/api/admin/sentences', form);
       }
-      notice.ok('句子已保存，前端与整句音频会自动更新');
+      notice.ok('已保存');
       setForm(null);
       await load();
     } catch (e) {
@@ -159,7 +159,7 @@ export default function AdminSentences() {
           footer={
             <>
               <Button onClick={() => setForm(null)}>取消</Button>
-              <Button variant="primary" onClick={save} disabled={saving}>{saving ? '保存中…' : '保存并立即生效'}</Button>
+              <Button variant="primary" onClick={save} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
             </>
           }
         >

@@ -59,7 +59,7 @@ export default function AdminPronunciation() {
       await Promise.all(
         TABS.map((tab) => api.put(`/api/admin/pronunciation/${tab.key}`, { payload: data[tab.key] })),
       );
-      notice.ok('发音中心已保存，前端立即生效');
+      notice.ok('已保存');
     } catch (e) {
       notice.err((e as Error).message);
     } finally {

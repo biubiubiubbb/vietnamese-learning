@@ -77,7 +77,7 @@ export default function AdminUnits() {
       } else {
         await api.post('/api/admin/units', unitForm);
       }
-      notice.ok('单元已保存，前端立即生效');
+      notice.ok('已保存');
       setUnitForm(null);
       await load();
     } catch (e) {
@@ -100,7 +100,7 @@ export default function AdminUnits() {
       } else {
         await api.post('/api/admin/lessons', lessonForm);
       }
-      notice.ok('课程已保存，前端立即生效');
+      notice.ok('已保存');
       setLessonForm(null);
       await load();
     } catch (e) {
@@ -238,7 +238,7 @@ export default function AdminUnits() {
           footer={
             <>
               <Button onClick={() => setLessonForm(null)}>取消</Button>
-              <Button variant="primary" onClick={saveLesson} disabled={saving}>{saving ? '保存中…' : '保存并立即生效'}</Button>
+              <Button variant="primary" onClick={saveLesson} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
             </>
           }
         >

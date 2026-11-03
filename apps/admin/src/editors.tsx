@@ -161,7 +161,7 @@ export function VocabPicker({
           </span>
         ))}
       </div>
-      <TextInput value={query} onChange={setQuery} placeholder="搜索词条，勾选后按顺序加入" />
+      <TextInput value={query} onChange={setQuery} placeholder="搜索词条" />
       <div className="admin-picker-list">
         {filtered.map((option) => (
           <label className="admin-picker-item" key={option.id}>
@@ -242,9 +242,6 @@ export function DialogueEditor({
               )}
             />
           </Field>
-          <p className="muted" style={{ fontSize: 11.5, margin: 0 }}>
-            整段朗读会按说话人首次出场顺序交替男女声；首位说话人使用后台默认音色。
-          </p>
         </>
       )}
     />
@@ -512,7 +509,6 @@ function OrderPicker({
             {position + 1}. {chunks[chunkIndex]?.vi || `词块 ${chunkIndex + 1}`}
           </button>
         ))}
-        {value.length === 0 && <span className="muted" style={{ fontSize: 12 }}>点击下方词块，按正确语序排列</span>}
       </div>
       <div className="admin-order-bank">
         {chunks.map((chunk, index) => (

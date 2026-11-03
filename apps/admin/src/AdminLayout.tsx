@@ -95,7 +95,6 @@ export default function AdminLayout() {
       <main className="admin-main">
         <div className="admin-topbar">
           <strong>内容管理</strong>
-          <span>单人管理员 · 保存立即生效</span>
         </div>
         <Outlet />
       </main>

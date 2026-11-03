@@ -14,7 +14,6 @@ function NotFound() {
   return (
     <div className="admin-page" style={{ textAlign: 'center', paddingTop: 60 }}>
       <h1>这一页不存在</h1>
-      <p className="muted">检查一下后台路径。</p>
       <Link to="/admin" className="admin-btn">回到总览</Link>
     </div>
   );

@@ -112,7 +112,7 @@ export default function AdminVocab() {
       } else {
         await api.post('/api/admin/vocab', payload);
       }
-      notice.ok('词条已保存，前端与音频生成会自动更新');
+      notice.ok('已保存');
       setForm(null);
       await load();
     } catch (e) {
@@ -189,7 +189,7 @@ export default function AdminVocab() {
           footer={
             <>
               <Button onClick={() => setForm(null)}>取消</Button>
-              <Button variant="primary" onClick={save} disabled={saving}>{saving ? '保存中…' : '保存并立即生效'}</Button>
+              <Button variant="primary" onClick={save} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
             </>
           }
         >
