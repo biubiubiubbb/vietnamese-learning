@@ -269,8 +269,16 @@ app.delete('/api/admin/lessons/:id', (req: Request, res: Response) => {
 });
 
 app.post('/api/admin/lessons/:id/restore', (req: Request, res: Response) => {
-  const result = db.prepare('UPDATE lessons SET deleted_at = NULL WHERE id = ?').run(req.params.id);
-  if (!result.changes) return fail(res, 404, '课程不存在');
+  const lesson = db.prepare('SELECT unit_id, vocab_ids FROM lessons WHERE id = ?').get(req.params.id);
+  if (!lesson) return fail(res, 404, '课程不存在');
+  const unit = db.prepare('SELECT id FROM units WHERE id = ? AND deleted_at IS NULL').get(lesson.unit_id);
+  if (!unit) return fail(res, 409, '所属单元已删除，请先恢复单元');
+  const missingVocab = jsonParse<string[]>(lesson.vocab_ids, [])
+    .filter((vocabId) => !db.prepare('SELECT id FROM vocab WHERE id = ? AND deleted_at IS NULL').get(vocabId));
+  if (missingVocab.length > 0) {
+    return fail(res, 409, `引用的词条已删除：${missingVocab.join('、')}，请先恢复词条`);
+  }
+  db.prepare('UPDATE lessons SET deleted_at = NULL WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 
@@ -358,12 +366,12 @@ app.put('/api/admin/vocab/:id', (req: Request, res: Response) => {
 });
 
 function vocabReferences(id: string) {
-  const lessons = db.prepare('SELECT id, title, vocab_ids FROM lessons WHERE deleted_at IS NULL').all()
-    .filter((row) => jsonParse<string[]>(row.vocab_ids, []).includes(id))
-    .map((row) => ({ type: 'lesson', id: row.id, title: row.title }));
-  const sentences = db.prepare('SELECT id, vi, chunks FROM sentences WHERE deleted_at IS NULL').all()
-    .filter((row) => jsonParse<any[]>(row.chunks, []).some((chunk: any) => chunk.vocabId === id))
-    .map((row) => ({ type: 'sentence', id: row.id, title: row.vi }));
+  const lessons = db.prepare('SELECT id, title, deleted_at FROM lessons').all()
+    .filter((row: any) => jsonParse<string[]>(row.vocab_ids, []).includes(id))
+    .map((row: any) => ({ type: 'lesson', id: row.id, title: row.title, deleted: Boolean(row.deleted_at) }));
+  const sentences = db.prepare('SELECT id, vi, chunks, deleted_at FROM sentences').all()
+    .filter((row: any) => jsonParse<any[]>(row.chunks, []).some((chunk: any) => chunk.vocabId === id))
+    .map((row: any) => ({ type: 'sentence', id: row.id, title: row.vi, deleted: Boolean(row.deleted_at) }));
   return [...lessons, ...sentences];
 }
 
@@ -374,7 +382,9 @@ app.get('/api/admin/vocab/:id/references', (req: Request, res: Response) => {
 app.delete('/api/admin/vocab/:id', (req: Request, res: Response) => {
   const refs = vocabReferences(String(req.params.id));
   if (refs.length > 0) {
-    return fail(res, 409, `该词条被 ${refs.length} 处引用，请先解除引用`);
+    const trashed = refs.filter((ref) => ref.deleted).length;
+    const suffix = trashed > 0 ? `（其中 ${trashed} 处在回收站）` : '';
+    return fail(res, 409, `该词条被 ${refs.length} 处引用${suffix}，请先解除引用`);
   }
   const result = db.prepare('UPDATE vocab SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(now(), req.params.id);
   if (!result.changes) return fail(res, 404, '词条不存在');
@@ -464,8 +474,11 @@ app.delete('/api/admin/sentences/:id', (req: Request, res: Response) => {
 });
 
 app.post('/api/admin/sentences/:id/restore', (req: Request, res: Response) => {
-  const result = db.prepare('UPDATE sentences SET deleted_at = NULL WHERE id = ?').run(req.params.id);
-  if (!result.changes) return fail(res, 404, '句子不存在');
+  const sentence = db.prepare('SELECT lesson_id FROM sentences WHERE id = ?').get(req.params.id);
+  if (!sentence) return fail(res, 404, '句子不存在');
+  const lesson = db.prepare('SELECT id FROM lessons WHERE id = ? AND deleted_at IS NULL').get(sentence.lesson_id);
+  if (!lesson) return fail(res, 409, '所属课程已删除，请先恢复课程');
+  db.prepare('UPDATE sentences SET deleted_at = NULL WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 
