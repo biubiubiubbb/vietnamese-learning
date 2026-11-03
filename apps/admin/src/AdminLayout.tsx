@@ -55,7 +55,6 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="admin-side-foot">
-          <a href="/" target="_blank" rel="noreferrer">打开前端 ↗</a>
           <Button variant="ghost" onClick={logout}>退出登录</Button>
         </div>
       </aside>
