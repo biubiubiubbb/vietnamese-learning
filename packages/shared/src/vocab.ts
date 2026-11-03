@@ -1,4 +1,5 @@
 import type { VocabItem } from './types';
+import { EXTRA_VOCAB } from './content-extra';
 
 export let VOCAB: VocabItem[] = [
   // ===== U1 发音（语音相关概念词） =====
@@ -169,6 +170,8 @@ export let VOCAB: VocabItem[] = [
   { id: 'u8-17', vi: 'bận', zh: '忙', pos: 'adj', tags: ['work'], example: { vi: 'Tuần này tôi bận lắm.', zh: '这周我很忙。' } },
   { id: 'u8-18', vi: 'rảnh', zh: '有空', pos: 'adj', tags: ['work'], example: { vi: 'Tối nay bạn rảnh không?', zh: '今晚你有空吗？' } },
 ];
+
+VOCAB.push(...EXTRA_VOCAB);
 
 export let VOCAB_IDS: string[] = VOCAB.map((v) => v.id);
 export const vocabById: Map<string, VocabItem> = new Map(VOCAB.map((v) => [v.id, v]));

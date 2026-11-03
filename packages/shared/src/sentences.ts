@@ -1,4 +1,5 @@
 import type { Sentence } from './types';
+import { EXTRA_SENTENCES } from './content-extra';
 
 /**
  * 句子库：每课 3 句，第 1 句配 1 道挖空，第 2/3 句配 1 道词序或中译越。
@@ -901,6 +902,8 @@ export let SENTENCES: Sentence[] = [
     ],
   },
 ];
+
+SENTENCES.push(...EXTRA_SENTENCES);
 
 export let SENTENCE_IDS: string[] = SENTENCES.map((s) => s.id);
 export const sentenceById: Map<string, Sentence> = new Map(SENTENCES.map((s) => [s.id, s]));

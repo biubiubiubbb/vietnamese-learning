@@ -1,4 +1,5 @@
 import type { Unit, Lesson } from './types';
+import { EXTRA_LESSONS } from './content-extra';
 
 export let UNITS: Unit[] = [
   { id: 'a1-u1', level: 'A1', order: 1, title: '发音与字母', subtitle: '29 个字母、6 个声调、难发音突破', lessonIds: ['l1-1', 'l1-2', 'l1-3', 'l1-4'] },
@@ -715,6 +716,15 @@ export let LESSONS: Lesson[] = [
     ],
   },
 ];
+
+for (const lesson of LESSONS) {
+  const extra = EXTRA_LESSONS[lesson.id];
+  if (!extra) continue;
+  lesson.vocabIds.push(...extra.vocabIds);
+  lesson.grammar.push(...extra.grammar);
+  lesson.dialogues.push(...extra.dialogues);
+  lesson.exercises.push(...extra.exercises);
+}
 
 export const lessonById: Map<string, Lesson> = new Map(LESSONS.map((l) => [l.id, l]));
 export const unitById: Map<string, Unit> = new Map(UNITS.map((u) => [u.id, u]));
