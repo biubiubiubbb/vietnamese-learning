@@ -189,19 +189,34 @@ export function getConfig() {
   for (const row of rows) out[row.key] = jsonParse(row.value, null);
   return {
     defaultVoice: out.defaultVoice === 'male' ? 'male' : 'female',
+    backgroundImage: typeof out.backgroundImage === 'string' ? out.backgroundImage : '',
+    backgroundMime: typeof out.backgroundMime === 'string' ? out.backgroundMime : '',
   };
 }
 
 export function saveConfig(patch: Record<string, unknown>) {
-  const allowed = ['defaultVoice'];
+  const allowed = ['defaultVoice', 'backgroundImage', 'backgroundMime'];
   for (const key of allowed) {
     if (!(key in patch)) continue;
-    const value = key === 'defaultVoice' && patch.defaultVoice === 'male' ? 'male' : 'female';
-    db.prepare(
-      `INSERT INTO config (key, value) VALUES (?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    ).run(key, JSON.stringify(value));
+    if (key === 'defaultVoice') {
+      const value = patch.defaultVoice === 'male' ? 'male' : 'female';
+      writeConfig(key, value);
+    } else if (typeof patch[key] === 'string') {
+      writeConfig(key, patch[key]);
+    }
   }
+  return getConfig();
+}
+
+function writeConfig(key: string, value: unknown) {
+  db.prepare(
+    `INSERT INTO config (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+  ).run(key, JSON.stringify(value));
+}
+
+export function clearBackgroundConfig() {
+  db.prepare("DELETE FROM config WHERE key IN ('backgroundImage', 'backgroundMime')").run();
   return getConfig();
 }
 

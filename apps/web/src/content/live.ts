@@ -14,6 +14,19 @@ interface ContentPayload {
   pronunciation: PronunciationData;
 }
 
+interface SiteConfig {
+  defaultVoice?: VoiceGender;
+  backgroundImage?: string;
+}
+
+function applyRemoteBackground(image?: string) {
+  if (!image) {
+    document.documentElement.style.removeProperty('--site-bg-image');
+    return;
+  }
+  document.documentElement.style.setProperty('--site-bg-image', `url("${apiUrl(image)}")`);
+}
+
 /**
  * 从后台读取线上内容。读取失败时保留静态内容作为兜底，
  * 这样纯前端预览或 API 未启动时页面仍可打开。
@@ -31,10 +44,11 @@ export async function hydrateContent(): Promise<boolean> {
     try {
       const config = await fetch(apiUrl('/api/config'), { cache: 'no-store' });
       if (config.ok) {
-        const value = (await config.json()) as { defaultVoice?: VoiceGender };
+        const value = (await config.json()) as SiteConfig;
         if (value.defaultVoice === 'male' || value.defaultVoice === 'female') {
           applyRemoteDefaultVoice(value.defaultVoice);
         }
+        applyRemoteBackground(value.backgroundImage);
       }
     } catch {
       /* 配置读取失败时保留本机偏好 */

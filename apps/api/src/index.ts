@@ -1,8 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import cors from 'cors';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
-import { db, jsonParse, now } from './db';
+import { db, jsonParse, now, DATA_DIR_PATH } from './db';
 import { ensureAdminUser, login, me, destroySession, requireAdmin } from './auth';
 import { seedIfEmpty } from './seed';
 import {
@@ -11,6 +13,7 @@ import {
   getAudioHealth,
   getConfig,
   saveConfig,
+  clearBackgroundConfig,
   getPronunciation,
   savePronunciation,
   getTrash,
@@ -39,6 +42,14 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
 });
+const BACKGROUND_FILE = path.join(DATA_DIR_PATH, 'background.img');
+const IMAGE_MIMES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/avif': 'avif',
+};
 
 app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
 app.use(express.json({ limit: '20mb' }));
@@ -92,6 +103,16 @@ app.get('/api/content', (_req: Request, res: Response) => {
 
 app.get('/api/config', (_req: Request, res: Response) => {
   res.json(getConfig());
+});
+
+app.get('/api/background', (_req: Request, res: Response) => {
+  const config = getConfig();
+  if (!config.backgroundImage || !fs.existsSync(BACKGROUND_FILE)) {
+    return fail(res, 404, '未设置背景图');
+  }
+  res.setHeader('Content-Type', config.backgroundMime || 'image/jpeg');
+  res.setHeader('Cache-Control', 'no-cache');
+  fs.createReadStream(BACKGROUND_FILE).pipe(res);
 });
 
 app.get('/api/audio/index', (_req: Request, res: Response) => {
@@ -558,6 +579,24 @@ app.get('/api/admin/config', (_req: Request, res: Response) => {
 
 app.put('/api/admin/config', (req: Request, res: Response) => {
   res.json(saveConfig(req.body ?? {}));
+});
+
+app.post('/api/admin/config/background', upload.single('file'), (req: Request, res: Response) => {
+  if (!req.file) return fail(res, 400, '请选择图片');
+  const mime = req.file.mimetype;
+  if (!IMAGE_MIMES[mime]) return fail(res, 400, '仅支持 JPG / PNG / WebP / GIF / AVIF');
+  fs.writeFileSync(BACKGROUND_FILE, req.file.buffer);
+  res.json(
+    saveConfig({
+      backgroundImage: `/api/background?v=${Date.now()}`,
+      backgroundMime: mime,
+    }),
+  );
+});
+
+app.delete('/api/admin/config/background', (_req: Request, res: Response) => {
+  fs.rmSync(BACKGROUND_FILE, { force: true });
+  res.json(clearBackgroundConfig());
 });
 
 app.get('/api/admin/trash', (_req: Request, res: Response) => {
