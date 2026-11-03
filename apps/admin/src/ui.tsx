@@ -175,11 +175,27 @@ export function Banner({ tone = 'ok', children }: { tone?: 'ok' | 'err' | 'info'
 }
 
 export function Loading() {
-  return <div className="admin-empty">加载中…</div>;
+  return (
+    <div className="admin-skeleton" role="status" aria-label="加载中">
+      <span />
+      <span />
+      <span />
+    </div>
+  );
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <div className="admin-empty">{children}</div>;
+  return (
+    <div className="admin-empty">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="45" cy="17" r="6" strokeWidth="2" opacity="0.55" />
+        <path d="M8 46c7-6 12-9 18-11 5 2 8 4 12 7 4-4 7-6 13-8 5 3 8 6 13 12" strokeWidth="2.4" />
+        <path d="M10 52c9-3 15-4 22-4 8 0 14 1 22 4" strokeWidth="1.8" opacity="0.6" />
+        <path d="M20 34c1-1 2-1 3 0M38 35c1-1 2-1 3 0" strokeWidth="1.8" opacity="0.5" />
+      </svg>
+      <span>{children}</span>
+    </div>
+  );
 }
 
 export function StatusChip({ status }: { status: string }) {

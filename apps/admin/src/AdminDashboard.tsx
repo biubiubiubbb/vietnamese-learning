@@ -54,6 +54,7 @@ export default function AdminDashboard() {
   return (
     <AdminPage
       title="总览"
+      subtitle="内容与音频的健康一览，保存后前台立即生效。"
       actions={
         <>
           <Button onClick={regenerateAll} disabled={busy}>{busy ? '生成中…' : '补齐缺失音频'}</Button>
@@ -62,11 +63,11 @@ export default function AdminDashboard() {
       }
     >
       {notice.notice && <Banner tone={notice.notice.tone}>{notice.notice.text}</Banner>}
-                 <div className="admin-stats">
-        <div className="admin-stat"><div className="n">{data.counts.units}</div><div className="l">单元</div></div>
-        <div className="admin-stat"><div className="n">{data.counts.lessons}</div><div className="l">课程</div></div>
-        <div className="admin-stat"><div className="n">{data.counts.vocab}</div><div className="l">词条</div></div>
-        <div className="admin-stat"><div className="n">{data.counts.sentences}</div><div className="l">句子</div></div>
+      <div className="admin-stats">
+        <div className="admin-stat tone-green"><div className="n">{data.counts.units}</div><div className="l">单元 · UNIT</div></div>
+        <div className="admin-stat tone-sky"><div className="n">{data.counts.lessons}</div><div className="l">课程 · LESSON</div></div>
+        <div className="admin-stat tone-pink"><div className="n">{data.counts.vocab}</div><div className="l">词条 · VOCAB</div></div>
+        <div className="admin-stat tone-sun"><div className="n">{data.counts.sentences}</div><div className="l">句子 · SENTENCE</div></div>
       </div>
 
       <div className="admin-grid-2">
