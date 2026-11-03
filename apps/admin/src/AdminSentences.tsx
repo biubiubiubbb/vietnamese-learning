@@ -24,9 +24,13 @@ interface LessonRow {
 const TAG_OPTIONS = Object.entries(SENTENCE_TAG_LABEL).map(([value, label]) => ({ value, label }));
 
 const emptySentence = (lessonId: string): Sentence => ({
-  id: '', lessonId, order: 0, vi: '', zh: '', tag: 'statement',
+  id: newId('s'), lessonId, order: 0, vi: '', zh: '', tag: 'statement',
   chunks: [], exercises: [], note: undefined,
 });
+
+function newId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+}
 
 export default function AdminSentences() {
   const [rows, setRows] = useState<Sentence[]>([]);
@@ -67,7 +71,7 @@ export default function AdminSentences() {
   const save = async () => {
     if (!form) return;
     if (!form.id.trim() || !form.vi.trim() || !form.zh.trim() || !form.lessonId) {
-      notice.err('ID、所属课程、越南语和中文不能为空');
+      notice.err('所属课程、越南语和中文不能为空');
       return;
     }
     if (form.chunks.length === 0) {
@@ -163,14 +167,9 @@ export default function AdminSentences() {
             </>
           }
         >
-          <div className="admin-grid-2">
-            <Field label="ID" hint="创建后不可修改">
-              <TextInput value={form.id} onChange={(id) => setForm({ ...form, id })} disabled={rows.some((row) => row.id === form.id)} />
-            </Field>
-            <Field label="所属课程">
-              <Select value={form.lessonId} onChange={(lessonId) => setForm({ ...form, lessonId })} options={lessons.map((lesson) => ({ value: lesson.id, label: `${lesson.id} · ${lesson.title}` }))} />
-            </Field>
-          </div>
+          <Field label="所属课程">
+            <Select value={form.lessonId} onChange={(lessonId) => setForm({ ...form, lessonId })} options={lessons.map((lesson) => ({ value: lesson.id, label: `${lesson.id} · ${lesson.title}` }))} />
+          </Field>
           <div className="admin-grid-2">
             <Field label="顺序"><TextInput type="number" value={String(form.order)} onChange={(order) => setForm({ ...form, order: Number(order) || 0 })} /></Field>
             <Field label="句型">

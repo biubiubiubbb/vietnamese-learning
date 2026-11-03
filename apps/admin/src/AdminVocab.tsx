@@ -38,8 +38,12 @@ interface VocabForm {
 }
 
 const emptyForm = (): VocabForm => ({
-  id: '', vi: '', zh: '', pos: 'n', hanViet: '', exampleVi: '', exampleZh: '', note: '', tags: [],
+  id: newId('v'), vi: '', zh: '', pos: 'n', hanViet: '', exampleVi: '', exampleZh: '', note: '', tags: [],
 });
+
+function newId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+}
 
 const POS_OPTIONS = Object.entries(POS_LABEL).map(([value, label]) => ({ value, label }));
 const TAG_OPTIONS = Object.entries(TAG_LABEL) as Array<[VocabTag, string]>;
@@ -194,7 +198,6 @@ export default function AdminVocab() {
           }
         >
           <div className="admin-grid-2">
-            <Field label="ID" hint="创建后不可修改"><TextInput value={form.id} onChange={(id) => setForm({ ...form, id })} disabled={rows.some((row) => row.id === form.id)} /></Field>
             <Field label="词性">
               <Select value={form.pos} onChange={(pos) => setForm({ ...form, pos: pos as Pos })} options={POS_OPTIONS} />
             </Field>
