@@ -57,7 +57,8 @@ export default function LessonPage() {
   const dlgTokenRef = useRef(0);
 
   if (!lesson) return <Navigate to="/learn" replace />;
-  const unit = unitOfLesson(lesson)!;
+  const unit = unitOfLesson(lesson);
+  if (!unit) return <Navigate to="/learn" replace />;
   const next = getNextLesson(lesson.id);
   const prev = getPrevLesson(lesson.id);
   const isDone = state.completedLessons.includes(lesson.id);
@@ -111,9 +112,10 @@ export default function LessonPage() {
           className="stagger"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}
         >
-          {(showAllVocab ? lesson.vocabIds : lesson.vocabIds.slice(0, VOCAB_PREVIEW)).map((vid) => (
-            <VocabRow key={vid} v={vocabById.get(vid)!} />
-          ))}
+          {(showAllVocab ? lesson.vocabIds : lesson.vocabIds.slice(0, VOCAB_PREVIEW)).map((vid) => {
+            const vocab = vocabById.get(vid);
+            return vocab ? <VocabRow key={vid} v={vocab} /> : null;
+          })}
         </div>
         {lesson.vocabIds.length > VOCAB_PREVIEW && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
