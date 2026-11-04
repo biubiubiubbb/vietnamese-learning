@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { createBrowserRouter, RouterProvider, Link } from 'react-router-dom';
 import { ProgressProvider } from './components/ProgressContext';
+import { AuthProvider } from './components/AuthContext';
+import RequireAuth from './components/RequireAuth';
 import { hydrateContent } from './content/live';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -13,6 +15,8 @@ import VocabularyPage from './pages/VocabularyPage';
 import PracticePage from './pages/PracticePage';
 import ReviewPage from './pages/ReviewPage';
 import ProgressPage from './pages/ProgressPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 function NotFound() {
   return (
@@ -33,12 +37,42 @@ const router = createBrowserRouter([
       { path: '/learn', element: <CurriculumPage /> },
       { path: '/unit/:unitId', element: <UnitPage /> },
       { path: '/lesson/:lessonId', element: <LessonPage /> },
-      { path: '/lesson/:lessonId/practice', element: <LessonPracticePage /> },
+      {
+        path: '/lesson/:lessonId/practice',
+        element: (
+          <RequireAuth>
+            <LessonPracticePage />
+          </RequireAuth>
+        ),
+      },
       { path: '/pronunciation', element: <PronunciationPage /> },
       { path: '/vocabulary', element: <VocabularyPage /> },
-      { path: '/practice', element: <PracticePage /> },
-      { path: '/review', element: <ReviewPage /> },
-      { path: '/progress', element: <ProgressPage /> },
+      {
+        path: '/practice',
+        element: (
+          <RequireAuth>
+            <PracticePage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/review',
+        element: (
+          <RequireAuth>
+            <ReviewPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/progress',
+        element: (
+          <RequireAuth>
+            <ProgressPage />
+          </RequireAuth>
+        ),
+      },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
@@ -60,8 +94,10 @@ export default function App() {
   }
 
   return (
-    <ProgressProvider>
-      <RouterProvider router={router} />
-    </ProgressProvider>
+    <AuthProvider>
+      <ProgressProvider>
+        <RouterProvider router={router} />
+      </ProgressProvider>
+    </AuthProvider>
   );
 }

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD｜客户账号与学习进度（注册登录 + 客户管理）</title>
+<style>
+  :root {
+    --paper: #FBF3E4;
+    --card: #FFFDF6;
+    --ink: #2E1F12;
+    --ink-soft: #8A7A66;
+    --line: #E4D8C6;
+    --orange: #E8622C;
+    --orange-deep: #C94F1F;
+    --orange-soft: #F6CBB2;
+    --teal: #1AA6A0;
+    --teal-soft: #D6EEEC;
+    --yellow: #F5D44F;
+    --yellow-soft: #FBE9A8;
+    --ok: #2F8F5B;
+    --ok-soft: #DFF0E4;
+    --err: #C0392B;
+    --err-soft: #FADFDB;
+    --r: 14px;
+    --shadow: 0 2px 0 rgba(46, 31, 18, 0.08);
+    --font: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); background-color: var(--paper);
+    background-image: radial-gradient(rgba(46,31,18,.045) 1.1px, transparent 1.1px);
+    background-size: 24px 24px; font-family: var(--font); line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--teal); }
+  .page { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+  .doc-head {
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    padding: 32px 34px; box-shadow: var(--shadow); margin-bottom: 24px;
+  }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px;
+    font-weight: 700; letter-spacing: .08em; color: var(--orange); text-transform: uppercase; }
+  .kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+  h1 { font-size: 32px; line-height: 1.3; margin: 10px 0 14px; letter-spacing: -.01em; }
+  .subtitle { color: var(--ink-soft); font-size: 15px; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .meta-item { font-size: 12.5px; background: var(--yellow-soft); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px; }
+  .meta-item strong { color: var(--ink-soft); font-weight: 700; margin-right: 6px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; padding: 0; list-style: none; }
+  .toc a { display: inline-block; font-size: 13px; text-decoration: none; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; }
+  .toc a:hover { border-color: var(--orange); color: var(--orange-deep); }
+  section { margin-bottom: 34px; }
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 26px 28px; box-shadow: var(--shadow);
+  }
+  h2 { font-size: 22px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+  h2 .no { font-size: 12px; font-weight: 800; color: #fff; background: var(--orange);
+    border-radius: 999px; padding: 2px 9px; letter-spacing: .04em; }
+  h3 { font-size: 16.5px; margin: 26px 0 8px; }
+  h4 { font-size: 14.5px; margin: 18px 0 6px; color: var(--orange-deep); }
+  p { margin: 8px 0; }
+  .lead { color: var(--ink-soft); font-size: 14px; margin-bottom: 14px; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--yellow-soft); font-weight: 700; }
+  td code, p code { background: #F4EBDC; border-radius: 5px; padding: 0 5px; font-size: 12.5px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .note {
+    border-left: 4px solid var(--teal); background: var(--teal-soft);
+    border-radius: 10px; padding: 10px 14px; font-size: 13.5px; margin: 12px 0;
+  }
+  .warn { border-left: 4px solid var(--err); background: var(--err-soft); border-radius: 10px;
+    padding: 10px 14px; font-size: 13.5px; margin: 12px 0; }
+  .assume { border-left: 4px solid var(--orange); background: var(--orange-soft); border-radius: 10px;
+    padding: 10px 14px; font-size: 13.5px; margin: 12px 0; }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 999px;
+    padding: 1px 9px; border: 1px solid transparent; line-height: 1.7; }
+  .tag.p0 { background: var(--orange); color: #fff; }
+  .tag.p1 { background: var(--yellow-soft); color: #7A5A00; border-color: #E8CE7A; }
+  .tag.out { background: #EFE6DA; color: var(--ink-soft); border-color: var(--line); }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.off { background: var(--err-soft); color: var(--err); }
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 14px 0; }
+  .flow .step { flex: 1 1 130px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; font-size: 13px; position: relative; }
+  .flow .step b { display: block; color: var(--orange-deep); font-size: 12px; letter-spacing: .04em; }
+  .flow .arrow { align-self: center; color: var(--ink-soft); font-weight: 700; }
+  .demo { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    overflow: hidden; box-shadow: var(--shadow); margin-top: 12px; }
+  .demo-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px; background: #F7EEDF;
+    border-bottom: 1px solid var(--line); }
+  .demo-tabs button { font-family: var(--font); font-size: 13px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+  .demo-tabs button.on { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 700; }
+  .demo-body { padding: 18px; }
+  .screen { display: none; }
+  .screen.on { display: block; }
+  .mock { border: 1px dashed #CDBBA2; border-radius: 12px; padding: 14px; background: #FFFCF4; }
+  .mock + .mock { margin-top: 12px; }
+  .mock-title { font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: .05em;
+    margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .field { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center;
+    font-size: 13px; margin: 7px 0; }
+  .input { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 6px 10px;
+    color: var(--ink-soft); min-height: 32px; }
+  .btn { display: inline-block; font-size: 12.5px; border-radius: 8px; padding: 5px 12px;
+    border: 1px solid var(--orange); background: var(--orange); color: #fff; font-weight: 700; }
+  .btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); font-weight: 600; }
+  .btn.danger { background: var(--err-soft); color: var(--err); border-color: #E9B6AE; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .muted { color: var(--ink-soft); font-size: 12.5px; }
+  .bar { height: 8px; border-radius: 999px; background: #EDE0CC; overflow: hidden; min-width: 90px; }
+  .bar i { display: block; height: 100%; background: var(--teal); }
+  .bar.orange i { background: var(--orange); }
+  .mini-table td, .mini-table th { padding: 6px 9px; font-size: 12.5px; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .q { font-size: 12px; color: var(--ink-soft); }
+  footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 40px; }
+  @media (max-width: 640px) {
+    .page { padding: 26px 14px 60px; }
+    .panel, .doc-head { padding: 20px 16px; }
+    h1 { font-size: 25px; }
+    .field { grid-template-columns: 1fr; gap: 2px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <div class="kicker">Product Requirements · P0</div>
+    <h1>客户账号与学习进度</h1>
+    <p class="subtitle">前台新增注册 / 登录，学习进度按客户账号记录；中后台新增客户管理，支持查看与检索、禁用 / 启用、重置密码、删除客户。</p>
+    <div class="meta">
+      <span class="meta-item"><strong>版本</strong>v0.1（待评审）</span>
+      <span class="meta-item"><strong>范围</strong>前台账号 + 账号级进度 + 中后台客户管理</span>
+      <span class="meta-item"><strong>登录方式</strong>用户名 + 密码</span>
+      <span class="meta-item"><strong>旧进度</strong>不合并，以账号数据为准</span>
+      <span class="meta-item"><strong>日期</strong>2026-11-04</span>
+    </div>
+  </header>
+
+  <ul class="toc">
+    <li><a href="#bg">1 背景与目标</a></li>
+    <li><a href="#scope">2 范围</a></li>
+    <li><a href="#model">3 角色与对象</a></li>
+    <li><a href="#flow">4 核心流程</a></li>
+    <li><a href="#fr">5 功能需求</a></li>
+    <li><a href="#ui">6 界面示意</a></li>
+    <li><a href="#rules">7 共享规则</a></li>
+    <li><a href="#edge">8 异常与边界</a></li>
+    <li><a href="#open">9 待确认</a></li>
+  </ul>
+
+  <section id="bg" class="panel">
+    <h2><span class="no">01</span>背景与目标</h2>
+    <p class="lead">当前学习数据只存在单台设备的浏览器里，中后台只管理内容，不知道客户是谁、学得怎么样。</p>
+    <h3>现状</h3>
+    <ul>
+      <li>前台学习进度保存在浏览器本地，包含已完成课次、课次测评成绩、词条复习卡（5 盒间隔）和句子复习卡；换设备、换浏览器或清理缓存后进度丢失。</li>
+      <li>前台没有账号体系，任何访问者都以同一个「本地学员」身份学习，无法区分两个客户。</li>
+      <li>中后台现有单元、课程、词汇、句子、发音、音频等内容管理能力，但没有任何客户维度的记录，无法查看某个客户的学习情况，也无法处理账号问题（如停用、重置密码）。</li>
+    </ul>
+    <h3>产品决策</h3>
+    <p>引入「客户账号」作为学习进度的唯一归属：注册 / 登录后才能产生并保存账号级学习记录；管理员通过客户管理查看这些记录，并对账号执行状态与安全操作。客户的学习情况允许各不相同，不做统一课程包或统一进度。</p>
+    <h3>目标（可观察）</h3>
+    <ul>
+      <li>客户注册并登录后，在另一台设备登录同一账号，能看到相同的课次完成、测评成绩与复习计划。</li>
+      <li>管理员可按用户名找到客户，并在一个详情页看到该客户的课次完成率、单元完成度、测评记录和待复习数量。</li>
+      <li>被禁用的客户无法继续登录，已登录会话立即失效；重新启用后学习记录原样恢复。</li>
+      <li>删除客户后，该账号与其学习记录不可再访问，用户名可被重新注册。</li>
+    </ul>
+    <div class="note">旧版本地进度不迁移、不合并：登录后界面只展示账号进度；账号没有记录时显示为 0，而不是浏览器里残留的进度。</div>
+  </section>
+
+  <section id="scope" class="panel">
+    <h2><span class="no">02</span>范围</h2>
+    <p class="lead">P0 是「客户能拥有自己的账号与进度，管理员能看到并管理这个账号」的最小完整闭环。</p>
+    <table>
+      <thead><tr><th style="width:88px">优先级</th><th>能力</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag p0">P0</span></td><td>前台注册</td><td>用户名 + 密码注册，成功即登录（FR-01）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>前台登录 / 登出 / 会话保持</td><td>登录、登出、会话过期重新登录（FR-02）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>登录门槛与回跳</td><td>浏览与试听开放；产生学习记录的动作需登录，登录后回到原页面（FR-03）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>账号级学习记录</td><td>课次完成、课次测评、词条复习卡、句子复习卡、最近学习时间（FR-04）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>客户列表与检索</td><td>分页列表、用户名搜索、状态筛选（FR-05）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>客户详情</td><td>账号信息 + 学习概览 + 单元完成度 + 测评记录 + 待复习（FR-06）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>禁用 / 启用客户</td><td>二次确认；立即失效会话；记录保留（FR-07）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>重置客户密码</td><td>管理员设置新密码；旧密码与全部会话立即失效（FR-08）。</td></tr>
+        <tr><td><span class="tag p0">P0</span></td><td>删除客户</td><td>输入用户名二次确认；账号与学习记录不可恢复（FR-09）。</td></tr>
+        <tr><td><span class="tag p1">P1</span></td><td>客户标签与备注</td><td>管理员给客户打标签、记录沟通备注，用于跟进。</td></tr>
+        <tr><td><span class="tag p1">P1</span></td><td>客户列表导出</td><td>按当前筛选条件导出 CSV。</td></tr>
+        <tr><td><span class="tag p1">P1</span></td><td>学员自助改密 / 找回</td><td>需额外的身份验证通道，P0 由管理员重置。</td></tr>
+        <tr><td><span class="tag out">不做</span></td><td>第三方登录、短信 / 邮件验证</td><td>P0 不引入外部账号与验证通道。</td></tr>
+        <tr><td><span class="tag out">不做</span></td><td>付费、班级、家长端</td><td>与本次闭环无关。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="model" class="panel">
+    <h2><span class="no">03</span>角色与对象</h2>
+    <h3>角色</h3>
+    <table>
+      <thead><tr><th style="width:120px">角色</th><th>定义</th><th>能做什么</th></tr></thead>
+      <tbody>
+        <tr><td>游客</td><td>未登录访问者</td><td>浏览首页、课程结构、单元与课次详情、词汇、句子、发音中心；试听音频。不能产生学习记录，不能进入测评与复习。</td></tr>
+        <tr><td>客户（学员）</td><td>在前台注册成功的账号，也是客户管理中的「客户」</td><td>学习课次、完成课次、参加课次测评、复习词条与句子；查看自己的进度；登出。</td></tr>
+        <tr><td>管理员</td><td>中后台账号，与客户账号体系分离</td><td>管理内容；在客户管理中查看 / 检索客户、禁用 / 启用、重置密码、删除客户。</td></tr>
+      </tbody>
+    </table>
+    <h3>对象</h3>
+    <table>
+      <thead><tr><th style="width:140px">对象</th><th>关键内容</th><th>归属与生命周期</th></tr></thead>
+      <tbody>
+        <tr><td>客户账号</td><td>用户名、密码、状态（正常 / 禁用）、注册时间、最近登录时间</td><td>属于一个客户；注册创建，删除销毁；状态可禁用 / 启用。</td></tr>
+        <tr><td>课次完成记录</td><td>课次、首次完成时间</td><td>按客户归属；同一课次只记一次，重复完成不重复计数。</td></tr>
+        <tr><td>课次测评记录</td><td>课次、正确题数、总题数、提交时间</td><td>按客户 + 课次归属；保留最近一次结果，重复测评覆盖展示值。</td></tr>
+        <tr><td>复习卡</td><td>词条或句子、盒子 1–5、下次到期时间</td><td>按客户 + 词条 / 句子归属；评分后更新盒子与到期时间。</td></tr>
+        <tr><td>最近学习时间</td><td>最近一次学习行为发生时间</td><td>由课次完成、测评提交、复习评分触发更新，用于列表排序。</td></tr>
+        <tr><td>登录会话</td><td>会话标识、创建时间、失效时间</td><td>按客户归属；登出、禁用、重置密码、删除时立即失效。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="flow" class="panel">
+    <h2><span class="no">04</span>核心流程</h2>
+    <p class="lead">客户从注册到被管理的主路径；任一步失败都在对应功能需求里定义恢复方式。</p>
+    <div class="flow">
+      <div class="step"><b>入口</b>游客浏览课程，点击需要登录的动作</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>注册 / 登录</b>用户名 + 密码；注册成功即登录</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>学习</b>课次、测评、词条与句子复习</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>记录</b>按账号即时保存，跨设备可见</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>管理</b>管理员检索客户、查看进度</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>处置</b>禁用 / 启用、重置密码、删除</div>
+    </div>
+    <p class="muted">说明：客户的课程范围与进度互不影响；本流程不含任何统一排课或班级逻辑。</p>
+  </section>
+
+  <section id="fr">
+    <h2 style="margin-left:4px"><span class="no">05</span>功能需求</h2>
+
+    <div class="panel" style="margin-top:12px">
+      <h3 style="margin-top:0">FR-01 前台注册</h3>
+      <p><b>目的</b>：让客户拥有可跨设备使用的账号，作为学习进度的归属。</p>
+      <p><b>入口</b>：首页 / 导航「注册」；需登录动作被拦截时的登录页内「还没有账号？注册」。</p>
+      <h4>字段与校验</h4>
+      <table>
+        <thead><tr><th style="width:110px">字段</th><th style="width:70px">必填</th><th>规则</th><th>错误提示</th></tr></thead>
+        <tbody>
+          <tr><td>用户名</td><td>是</td><td>4–20 个字符，仅字母、数字、下划线；不区分大小写唯一；注册后不可修改。</td><td>「用户名需 4–20 位，仅限字母、数字和下划线」/「该用户名已被使用」</td></tr>
+          <tr><td>密码</td><td>是</td><td>8–64 个字符，至少包含 1 个字母和 1 个数字，区分大小写；前后空格不参与校验。</td><td>「密码需 8–64 位，且同时包含字母和数字」</td></tr>
+          <tr><td>确认密码</td><td>是</td><td>与密码完全一致。</td><td>「两次输入的密码不一致」</td></tr>
+        </tbody>
+      </table>
+      <h4>处理规则</h4>
+      <ul>
+        <li>提交时先做本地格式校验，全部通过后再提交；服务端校验用户名唯一性，冲突时保留已填内容并提示。</li>
+        <li>注册成功后自动登录，跳转到注册前想去的页面；无来源页时进入首页。</li>
+        <li>注册不要求邀请码、审核或邮箱 / 手机号验证。</li>
+      </ul>
+      <h4>结果与状态变化</h4>
+      <ul>
+        <li>创建客户账号（状态「正常」），创建登录会话；学习记录为空，进度显示 0。</li>
+        <li>管理员客户列表立即可见该客户，最近学习时间为空。</li>
+      </ul>
+      <div class="assume">[Assumption, TBD] 同一 IP 每小时最多成功注册 10 个账号，超出提示「操作过于频繁，请稍后再试」。该阈值用于防批量注册，可在评审时调整。</div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-02 前台登录、登出与会话</h3>
+      <p><b>目的</b>：客户在任何设备上进入自己的学习记录。</p>
+      <h4>登录</h4>
+      <ul>
+        <li>输入用户名 + 密码；用户名校验不区分大小写，密码区分大小写。</li>
+        <li>凭据错误统一提示「用户名或密码不正确」，不区分「用户不存在」与「密码错误」。</li>
+        <li>同一用户名连续 5 次失败后锁定 15 分钟，期间即使密码正确也提示「尝试次数过多，请 15 分钟后再试」；成功登录后失败计数清零。</li>
+        <li>状态为「禁用」的账号登录时提示「账号已被禁用，请联系管理员」，不创建会话。</li>
+      </ul>
+      <h4>会话</h4>
+      <ul>
+        <li>登录成功后创建会话，有效期 7 天；有效期内访问前台自动保持登录。</li>
+        <li>会话过期后访问需登录页面，跳转登录页并在登录成功后回到原页面。</li>
+        <li>登出立即销毁当前会话并回到首页；不影响其他设备的会话。</li>
+        <li>禁用、重置密码、删除客户时，该客户的全部会话立即失效（见 FR-07 / FR-08 / FR-09）。</li>
+      </ul>
+      <h4>导航展示</h4>
+      <p>登录后导航显示用户名与「登出」；未登录显示「登录 / 注册」。同一浏览器只保留一个客户会话，登录另一个账号会替换当前会话。</p>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-03 学习行为的登录门槛与旧进度处理</h3>
+      <p><b>目的</b>：保证所有可展示的进度都能归属到账号，同时不让游客在浏览阶段就被登录拦住。</p>
+      <h4>无需登录（游客可用）</h4>
+      <ul>
+        <li>首页、课程结构、单元与课次详情、词汇、句子、发音中心。</li>
+        <li>试听词条、句子与课次内已有的音频。</li>
+      </ul>
+      <h4>需要登录</h4>
+      <ul>
+        <li>开始课次学习、标记课次完成、提交课次测评。</li>
+        <li>词条 / 句子复习评分，以及进入「进度」「复习」页面。</li>
+        <li>任何会写入学习记录的动作。</li>
+      </ul>
+      <p>游客触发受限动作时，弹出登录提示或跳转登录页；登录 / 注册成功后自动回到触发动作所在的页面，不自动执行原动作，由客户再次点击。</p>
+      <div class="warn"><b>旧进度不合并（已确认）</b>：登录后只读取账号的学习记录，不读取、不导入浏览器中已有的本地进度。账号记录为空时，进度页显示 0 / 总课次、无测评、无复习卡；本地旧数据不作为任何展示依据。</div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-04 账号级学习记录</h3>
+      <p><b>目的</b>：让「每个客户的学习情况都不一样」成为可保存、可查看的事实。</p>
+      <h4>记录内容</h4>
+      <table>
+        <thead><tr><th style="width:120px">记录</th><th>写入时机</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td>课次完成</td><td>客户完成课次学习并点击完成</td><td>同一课次仅保留首次完成时间；重复完成不新增记录、不改变完成时间。</td></tr>
+          <tr><td>课次测评</td><td>提交课次测评</td><td>保存正确题数、总题数与提交时间；同一课次重复测评时以最近一次为展示值。</td></tr>
+          <tr><td>词条复习卡</td><td>复习评分「再练一次」或「记住了」</td><td>盒子 1–5；评分后更新盒子与下次到期时间；未复习过的词条无卡片记录。</td></tr>
+          <tr><td>句子复习卡</td><td>复习评分「再练一次」或「记住了」</td><td>与词条相同的盒子规则，单独统计。</td></tr>
+          <tr><td>最近学习时间</td><td>以上任一行为成功写入</td><td>取最近一次行为时间，用于「最近学习」展示与列表排序。</td></tr>
+        </tbody>
+      </table>
+      <p>课次、词条、句子以当前课程内容为准；内容被删除后，对应记录不再计入完成率与待复习数量，但保留在客户历史中不再展示明细。</p>
+      <h4>进度指标（前台与中后台使用同一套计算）</h4>
+      <table>
+        <thead><tr><th style="width:150px">指标</th><th>计算规则</th><th>空值表现</th></tr></thead>
+        <tbody>
+          <tr><td>课次完成率</td><td>已完成课次数 ÷ 当前全部课次数，向上取整到整数百分比。</td><td>无课次数据时显示 0%。</td></tr>
+          <tr><td>单元完成度</td><td>单元内已完成课次数 ÷ 该单元课次总数。</td><td>单元无课次时不展示该单元。</td></tr>
+          <tr><td>测评平均正确率</td><td>所有已测评课次的正确题数之和 ÷ 总题数之和，保留整数百分比。</td><td>无测评记录显示「—」。</td></tr>
+          <tr><td>待复习词条 / 句子</td><td>到期时间 ≤ 当前时间 的卡片数量；分别统计词条与句子。</td><td>无到期卡片显示 0。</td></tr>
+          <tr><td>最近学习</td><td>最近一次写入学习记录的时间。</td><td>从未学习显示「—」。</td></tr>
+        </tbody>
+      </table>
+      <h4>同步与展示</h4>
+      <ul>
+        <li>学习行为成功后即时保存到账号；客户在另一台设备登录同一账号可看到相同数据。</li>
+        <li>前台进度页展示：已完成课次（x / 总课次）、待复习词条数、待复习句子数、各单元完成度。</li>
+        <li>P0 不提供离线学习与冲突合并；网络失败时提示重试，未成功写入的行为不计数。</li>
+        <li>学习记录只由客户本人的学习行为写入；管理员不能代改、补录或清除单个记录。</li>
+      </ul>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-05 中后台客户列表与检索</h3>
+      <p><b>目的</b>：管理员能快速找到某个客户，并一眼判断其状态与学习活跃度。</p>
+      <h4>布局</h4>
+      <p>顶部为搜索与筛选；中部为列表；底部为分页。列表列固定为：用户名、状态、课次完成、待复习、最近学习、注册时间、操作。</p>
+      <h4>处理规则</h4>
+      <ul>
+        <li>默认排序：最近学习时间倒序；从未学习的客户排在后面，按注册时间倒序。</li>
+        <li>搜索：按用户名模糊匹配，不区分大小写，去除首尾空格；输入后点击搜索或回车生效。</li>
+        <li>状态筛选：全部（默认）/ 正常 / 禁用。</li>
+        <li>分页：每页 20 条，显示总条数与页码；筛选条件在翻页时保留。</li>
+        <li>「课次完成」显示「已完成数 / 总课次」；「待复习」显示词条数与句子数合计；「最近学习」显示相对时间（如「2 天前」），悬停显示具体时间。</li>
+        <li>操作列提供「查看」，进入客户详情（FR-06）。</li>
+      </ul>
+      <h4>空状态与异常</h4>
+      <ul>
+        <li>无任何客户：「还没有客户，客户在前台注册后会出现在这里」。</li>
+        <li>筛选 / 搜索无结果：「没有匹配的客户」，提供「清除筛选」。</li>
+        <li>加载失败：显示错误与「重试」，保留当前筛选条件。</li>
+      </ul>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-06 客户详情</h3>
+      <p><b>目的</b>：回答「这个客户学得怎么样、学到哪、卡在哪」。</p>
+      <h4>页面结构</h4>
+      <ol>
+        <li><b>账号信息</b>：用户名、状态、注册时间、最近登录时间、最近学习时间；右上角为操作入口（禁用 / 启用、重置密码、删除）。</li>
+        <li><b>学习概览</b>：课次完成率、已完成课次（x / 总课次）、测评平均正确率、待复习词条数、待复习句子数。</li>
+        <li><b>单元完成度</b>：按单元顺序列出每个单元的已完成 / 总课次与进度条；未开始的单元同样展示为 0%。</li>
+        <li><b>课次明细</b>：已完成课次列表（课次名称、首次完成时间）；已测评课次列表（课次名称、正确题数 / 总题数、正确率、提交时间）。无记录时分别显示空状态。</li>
+        <li><b>复习卡摘要</b>：词条与句子各显示总数、各盒子数量、当前到期数量；不展示逐条卡片内容。</li>
+      </ol>
+      <h4>规则</h4>
+      <ul>
+        <li>详情只读；不提供编辑学习记录、代打卡、重置单个课次进度的能力。</li>
+        <li>从列表进入时保留来源筛选与页码，返回列表回到原位置。</li>
+        <li>客户被删除后再次访问该详情，提示「客户不存在或已被删除」并返回列表。</li>
+      </ul>
+      <div class="assume">[Assumption, TBD] 客户详情不展示客户密码、登录 IP 与设备信息；如后续需要安全排查，再单独定义。</div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-07 禁用 / 启用客户</h3>
+      <p><b>目的</b>：在不删除学习记录的前提下，阻止某个客户继续使用账号。</p>
+      <h4>禁用</h4>
+      <ul>
+        <li>入口：客户详情操作区、列表操作列；点击「禁用」弹出二次确认，说明「禁用后该客户将立即退出登录且无法再登录，学习记录会保留」。</li>
+        <li>确认后：账号状态变为「禁用」；该客户全部会话立即失效；后续登录被拒（提示见 FR-02）。</li>
+        <li>禁用不改变学习记录、不改变最近学习时间、不影响列表排序依据以外的数据。</li>
+      </ul>
+      <h4>启用</h4>
+      <ul>
+        <li>对「禁用」客户显示「启用」，确认后状态恢复「正常」；客户可重新登录，原学习记录原样可见。</li>
+        <li>启用不自动创建会话，客户需自行登录。</li>
+      </ul>
+      <p>列表与详情的状态标签：<span class="tag ok">正常</span> / <span class="tag off">禁用</span>。操作成功后即时刷新当前页面并提示结果。</p>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-08 重置客户密码</h3>
+      <p><b>目的</b>：客户忘记密码且 P0 无自助找回时，由管理员恢复其登录能力。</p>
+      <h4>流程</h4>
+      <ul>
+        <li>客户详情操作区点击「重置密码」，弹窗要求管理员输入新密码并再次确认；密码规则与注册一致（8–64 位，至少 1 个字母和 1 个数字）。</li>
+        <li>提交前提示「重置后旧密码立即失效，该客户所有设备将被退出登录」。</li>
+        <li>确认后：新密码立即生效；该客户全部会话失效；学习记录不变。</li>
+        <li>成功后弹窗关闭并提示「密码已重置，请将新密码告知客户」；管理员需自行通过线下或其他渠道告知客户。</li>
+      </ul>
+      <p>不允许管理员查看客户当前密码；不提供「以客户身份登录」的模拟功能。</p>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h3 style="margin-top:0">FR-09 删除客户</h3>
+      <p><b>目的</b>：彻底移除不再合作的客户及其学习数据。</p>
+      <div class="warn">删除是不可恢复操作。账号、登录会话与全部学习记录一并消失，且不保留可恢复副本。</div>
+      <h4>流程</h4>
+      <ul>
+        <li>客户详情操作区点击「删除客户」，弹出确认框，要求输入完整用户名后才能确认删除；输入不一致时确认按钮不可用。</li>
+        <li>确认框明确列出影响：账号无法再登录、学习记录与复习计划一并删除、用户名可被重新注册、操作不可撤销。</li>
+        <li>确认后：删除账号与学习记录；该客户全部会话立即失效；返回客户列表并提示「客户已删除」。</li>
+        <li>删除后使用同一用户名重新注册，视为全新客户，进度从 0 开始。</li>
+      </ul>
+      <p>客户管理只能删除客户账号，不能删除管理员账号；管理员账号不在客户列表中展示。</p>
+    </div>
+  </section>
+
+  <section id="ui" class="panel">
+    <h2><span class="no">06</span>界面示意</h2>
+    <p class="lead">三块 P0 界面示意，用于对齐字段、状态与操作位置；非最终视觉稿。可点击顶部标签切换。</p>
+    <div class="demo">
+      <div class="demo-tabs">
+        <button class="on" data-tab="t1">注册 / 登录</button>
+        <button data-tab="t2">客户列表</button>
+        <button data-tab="t3">客户详情</button>
+      </div>
+      <div class="demo-body">
+        <div class="screen on" id="t1">
+          <div class="two">
+            <div class="mock">
+              <div class="mock-title"><span>注册 · FR-01</span><span class="muted">注册成功即登录</span></div>
+              <div class="field"><span>用户名</span><div class="input">minh_2026</div></div>
+              <div class="field"><span>密码</span><div class="input">••••••••</div></div>
+              <div class="field"><span>确认密码</span><div class="input">••••••••</div></div>
+              <div class="row" style="margin-top:10px"><span class="btn">注册</span><span class="muted">4–20 位字母 / 数字 / 下划线</span></div>
+              <p class="muted" style="color:var(--err);margin:8px 0 0">示例错误：该用户名已被使用</p>
+            </div>
+            <div class="mock">
+              <div class="mock-title"><span>登录 · FR-02</span><span class="muted">会话 7 天</span></div>
+              <div class="field"><span>用户名</span><div class="input">minh_2026</div></div>
+              <div class="field"><span>密码</span><div class="input">••••••••</div></div>
+              <div class="row" style="margin-top:10px"><span class="btn">登录</span><span class="muted">还没有账号？注册</span></div>
+              <p class="muted" style="color:var(--err);margin:8px 0 0">禁用账号：账号已被禁用，请联系管理员</p>
+              <p class="muted" style="margin:8px 0 0">连续 5 次失败锁定 15 分钟</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen" id="t2">
+          <div class="mock">
+            <div class="mock-title"><span>客户列表 · FR-05 / FR-07</span><span class="muted">默认按最近学习倒序</span></div>
+            <div class="row" style="margin-bottom:10px">
+              <div class="input" style="min-width:200px">搜索用户名</div>
+              <div class="input" style="min-width:120px">状态：全部 ▾</div>
+              <span class="btn ghost">搜索</span>
+            </div>
+            <table class="mini-table">
+              <thead><tr><th>用户名</th><th>状态</th><th>课次完成</th><th>待复习</th><th>最近学习</th><th>注册时间</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr><td>minh_2026</td><td><span class="tag ok">正常</span></td><td>12 / 25</td><td>词 18 · 句 6</td><td>2 小时前</td><td>2026-10-02</td><td><span class="btn ghost">查看</span></td></tr>
+                <tr><td>lan_pham</td><td><span class="tag ok">正常</span></td><td>3 / 25</td><td>词 4 · 句 1</td><td>昨天</td><td>2026-10-21</td><td><span class="btn ghost">查看</span> <span class="btn danger">禁用</span></td></tr>
+                <tr><td>tuan_nguyen</td><td><span class="tag off">禁用</span></td><td>0 / 25</td><td>0</td><td>—</td><td>2026-09-18</td><td><span class="btn ghost">查看</span> <span class="btn ghost">启用</span></td></tr>
+                <tr><td>thao_tran</td><td><span class="tag ok">正常</span></td><td>25 / 25</td><td>0</td><td>5 天前</td><td>2026-08-30</td><td><span class="btn ghost">查看</span></td></tr>
+              </tbody>
+            </table>
+            <p class="muted" style="margin:8px 0 0">共 4 位客户 · 每页 20 条 · 空状态：「还没有客户，客户在前台注册后会出现在这里」</p>
+          </div>
+        </div>
+
+        <div class="screen" id="t3">
+          <div class="mock">
+            <div class="mock-title"><span>客户详情 · FR-06 / FR-08 / FR-09</span><span class="muted">只读学习记录</span></div>
+            <div class="row" style="justify-content:space-between;gap:12px">
+              <div><b style="font-size:15px">minh_2026</b> <span class="tag ok">正常</span>
+                <div class="muted">注册 2026-10-02 · 最近登录 2 小时前 · 最近学习 2 小时前</div>
+              </div>
+              <div class="row"><span class="btn ghost">禁用</span><span class="btn ghost">重置密码</span><span class="btn danger">删除客户</span></div>
+            </div>
+            <div class="two" style="margin-top:12px">
+              <div class="mock">
+                <div class="mock-title"><span>学习概览</span></div>
+                <div class="q">课次完成率 48%（12 / 25）</div>
+                <div class="bar orange" style="margin:4px 0 8px"><i style="width:48%"></i></div>
+                <div class="q">测评平均正确率 82% · 待复习 词 18 / 句 6</div>
+              </div>
+              <div class="mock">
+                <div class="mock-title"><span>单元完成度</span></div>
+                <div class="q">单元 01 · 3 / 3</div><div class="bar"><i style="width:100%"></i></div>
+                <div class="q" style="margin-top:6px">单元 02 · 5 / 6</div><div class="bar"><i style="width:83%"></i></div>
+                <div class="q" style="margin-top:6px">单元 03 · 4 / 8</div><div class="bar"><i style="width:50%"></i></div>
+              </div>
+            </div>
+            <div class="mock">
+              <div class="mock-title"><span>课次明细</span><span class="muted">最近 3 条</span></div>
+              <table class="mini-table">
+                <thead><tr><th>课次</th><th>测评</th><th>正确率</th><th>时间</th></tr></thead>
+                <tbody>
+                  <tr><td>单元 03 · 课次 4</td><td>8 / 10</td><td>80%</td><td>2026-11-04 09:12</td></tr>
+                  <tr><td>单元 03 · 课次 3</td><td>9 / 10</td><td>90%</td><td>2026-11-02 20:03</td></tr>
+                  <tr><td>单元 03 · 课次 2</td><td>7 / 10</td><td>70%</td><td>2026-10-30 19:45</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="muted" style="margin:8px 0 0">删除确认需输入完整用户名；重置密码需输入符合规则的新密码，并提示旧密码与全部会话立即失效。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rules" class="panel">
+    <h2><span class="no">07</span>共享规则</h2>
+    <h3>权限矩阵</h3>
+    <table>
+      <thead><tr><th style="width:200px">能力</th><th>游客</th><th>客户</th><th>管理员</th></tr></thead>
+      <tbody>
+        <tr><td>浏览课程结构 / 单元 / 课次</td><td>✓</td><td>✓</td><td>✓（中后台内容页）</td></tr>
+        <tr><td>试听音频</td><td>✓</td><td>✓</td><td>✓</td></tr>
+        <tr><td>课次学习 / 完成 / 测评</td><td>✗</td><td>✓（仅本人）</td><td>✗</td></tr>
+        <tr><td>复习评分 / 查看本人进度</td><td>✗</td><td>✓（仅本人）</td><td>✗</td></tr>
+        <tr><td>查看客户列表与学习记录</td><td>✗</td><td>✗</td><td>✓（全部客户）</td></tr>
+        <tr><td>禁用 / 启用、重置密码、删除客户</td><td>✗</td><td>✗</td><td>✓</td></tr>
+        <tr><td>修改学习记录</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      </tbody>
+    </table>
+    <h3>客户账号状态</h3>
+    <table>
+      <thead><tr><th style="width:110px">状态</th><th>进入方式</th><th>可登录</th><th>学习记录</th><th>离开方式</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag ok">正常</span></td><td>注册成功 / 管理员启用</td><td>是</td><td>可读写</td><td>管理员禁用；管理员删除</td></tr>
+        <tr><td><span class="tag off">禁用</span></td><td>管理员禁用</td><td>否</td><td>保留，不可写</td><td>管理员启用；管理员删除</td></tr>
+        <tr><td>已删除</td><td>管理员删除</td><td>否</td><td>随账号销毁</td><td>—（不可恢复）</td></tr>
+      </tbody>
+    </table>
+    <h3>会话与安全规则</h3>
+    <ul>
+      <li>会话有效期 7 天；登出、禁用、重置密码、删除客户时立即失效。</li>
+      <li>密码不展示、不可查看；重置密码只接受符合规则的新密码。</li>
+      <li>用户名唯一且注册后不可修改；大小写不同的同名视为同一用户名。</li>
+      <li>客户账号与管理员账号完全分离：客户不能进入中后台，管理员账号不出现在客户管理列表。</li>
+      <li>删除客户为不可恢复操作，必须输入完整用户名确认；禁用、重置密码为可恢复 / 可再操作动作，需二次确认。</li>
+    </ul>
+  </section>
+
+  <section id="edge" class="panel">
+    <h2><span class="no">08</span>异常与边界</h2>
+    <table>
+      <thead><tr><th style="width:190px">场景</th><th>表现与处理</th></tr></thead>
+      <tbody>
+        <tr><td>注册时用户名并发被占用</td><td>服务端返回用户名已存在；保留其他已填内容，聚焦用户名字段并提示。</td></tr>
+        <tr><td>登录连续失败触发锁定</td><td>15 分钟内拒绝该用户名登录；提示剩余等待时间，不透露账号是否存在。</td></tr>
+        <tr><td>会话过期时正在学习</td><td>保存动作被拒，提示「登录已过期」，跳转登录页；登录成功后回到原页面，由客户重新提交，不自动补记。</td></tr>
+        <tr><td>客户在另一设备被禁用</td><td>当前页面继续可浏览，但下一次写入学习记录或访问需登录页面时被拒，提示「账号已被禁用」并退出登录。</td></tr>
+        <tr><td>网络失败导致记录未保存</td><td>提示重试；该次完成 / 测评 / 复习不计入进度，重试成功后再计入。</td></tr>
+        <tr><td>客户无任何学习记录</td><td>进度页显示 0 / 总课次、无测评、待复习 0；中后台详情显示空状态，不显示错误。</td></tr>
+        <tr><td>课程内容被删除</td><td>对应课次不再计入完成率分母与已完成数；历史测评与复习卡不再展示明细。</td></tr>
+        <tr><td>管理员删除客户后刷新详情</td><td>提示「客户不存在或已被删除」，返回客户列表。</td></tr>
+        <tr><td>重复提交完成 / 测评</td><td>完成只记首次；测评以最近一次为展示值；复习评分按最后一次更新卡片。</td></tr>
+        <tr><td>管理员误删客户</td><td>删除不可撤销；确认框要求输入完整用户名，并在按钮上方持续显示不可恢复提示。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="open" class="panel">
+    <h2><span class="no">09</span>待确认</h2>
+    <p class="lead">以下问题不影响本轮进入开发，但会改变后续范围；评审时确认。</p>
+    <table>
+      <thead><tr><th style="width:230px">问题</th><th>当前默认</th><th>影响</th></tr></thead>
+      <tbody>
+        <tr><td>注册是否需要邀请码或人工审核？</td><td>[Assumption, TBD] 不需要，注册即用。</td><td>加上后注册流程与客户来源字段需重定义。</td></tr>
+        <tr><td>游客是否允许试学一个课次？</td><td>[Assumption, TBD] 只浏览与试听，不产生学习记录。</td><td>若允许试学，需定义试学范围与登录后的进度处理。</td></tr>
+        <tr><td>是否需要客户自助改密 / 找回？</td><td>P1，P0 仅管理员重置。</td><td>需要额外的身份验证通道。</td></tr>
+        <tr><td>管理员操作是否需要长期审计记录？</td><td>[Assumption, TBD] 仅保留最近操作结果，不做长期审计展示。</td><td>涉及合规与留存周期，需要单独定义。</td></tr>
+        <tr><td>删除客户后是否保留匿名统计？</td><td>[Assumption, TBD] 不保留，账号与学习记录一并销毁。</td><td>影响数据报表与合规口径。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>越语学堂 · 客户账号与学习进度 PRD v0.1 · 待评审</footer>
+</div>
+<script>
+  document.querySelectorAll('.demo-tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.demo-tabs button').forEach(function (b) { b.classList.remove('on'); });
+      document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('on'); });
+      btn.classList.add('on');
+      var target = document.getElementById(btn.getAttribute('data-tab'));
+      if (target) target.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>

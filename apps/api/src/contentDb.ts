@@ -187,19 +187,26 @@ export function getConfig() {
   const rows = db.prepare('SELECT key, value FROM config').all() as Row[];
   const out: Record<string, any> = {};
   for (const row of rows) out[row.key] = jsonParse(row.value, null);
+  const sessionDays = Number(out.customerSessionDays);
   return {
     defaultVoice: out.defaultVoice === 'male' ? 'male' : 'female',
     backgroundImage: typeof out.backgroundImage === 'string' ? out.backgroundImage : '',
     backgroundMime: typeof out.backgroundMime === 'string' ? out.backgroundMime : '',
+    customerSessionDays:
+      Number.isInteger(sessionDays) && sessionDays >= 1 && sessionDays <= 365 ? sessionDays : 30,
   };
 }
 
 export function saveConfig(patch: Record<string, unknown>) {
-  const allowed = ['defaultVoice', 'backgroundImage', 'backgroundMime'];
+  const allowed = ['defaultVoice', 'backgroundImage', 'backgroundMime', 'customerSessionDays'];
   for (const key of allowed) {
     if (!(key in patch)) continue;
     if (key === 'defaultVoice') {
       const value = patch.defaultVoice === 'male' ? 'male' : 'female';
+      writeConfig(key, value);
+    } else if (key === 'customerSessionDays') {
+      const value = Math.round(Number(patch[key]));
+      if (!Number.isFinite(value) || value < 1 || value > 365) continue;
       writeConfig(key, value);
     } else if (typeof patch[key] === 'string') {
       writeConfig(key, patch[key]);

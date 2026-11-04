@@ -5,6 +5,7 @@ import { Button } from './ui';
 
 type NavIcon =
   | 'overview'
+  | 'customers'
   | 'units'
   | 'vocab'
   | 'sentences'
@@ -15,6 +16,7 @@ type NavIcon =
 
 const NAV: Array<{ to: string; label: string; end?: boolean; icon: NavIcon }> = [
   { to: '/admin', label: '总览', end: true, icon: 'overview' },
+  { to: '/admin/customers', label: '客户管理', icon: 'customers' },
   { to: '/admin/units', label: '课程结构', icon: 'units' },
   { to: '/admin/vocab', label: '词汇', icon: 'vocab' },
   { to: '/admin/sentences', label: '句子', icon: 'sentences' },
@@ -26,6 +28,7 @@ const NAV: Array<{ to: string; label: string; end?: boolean; icon: NavIcon }> = 
 
 const ICONS: Record<NavIcon, string[]> = {
   overview: ['M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z', 'M15.4 8.6l-2 4.8-4.8 2 2-4.8z'],
+  customers: ['M12 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', 'M4.5 20c1.2-3.6 4-5.4 7.5-5.4s6.3 1.8 7.5 5.4', 'M17 8.2a2.6 2.6 0 1 1 0 5.2', 'M18.5 18.8c.8-1.9 2.1-3 4-3.5'],
   units: ['M12 3.5l8 4.4-8 4.4-8-4.4z', 'M4 12l8 4.4 8-4.4', 'M4 16.4l8 4.4 8-4.4'],
   vocab: ['M4 5.6c2.6-1 5.1-1 8 .4 2.9-1.4 5.4-1.4 8-.4v13c-2.6-1-5.1-1-8 .4-2.9-1.4-5.4-1.4-8-.4z', 'M12 6v13'],
   sentences: ['M9.5 7.5c-2.4 1-3.9 2.9-3.9 5.7V17h4.8v-4.7H7.6c0-1.8 1-2.8 2.8-3.3z', 'M18.4 7.5c-2.4 1-3.9 2.9-3.9 5.7V17h4.8v-4.7h-2.8c0-1.8 1-2.8 2.8-3.3z'],

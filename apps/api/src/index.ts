@@ -6,6 +6,7 @@ import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { db, jsonParse, now, DATA_DIR_PATH } from './db';
 import { ensureAdminUser, login, me, destroySession, requireAdmin } from './auth';
+import { accountRouter, adminCustomersRouter } from './accounts';
 import { seedIfEmpty } from './seed';
 import {
   getContent,
@@ -95,6 +96,10 @@ app.post('/api/auth/logout', (req: Request, res: Response) => {
 });
 app.get('/api/auth/me', me);
 
+/* ---------- 客户账号 ---------- */
+
+app.use('/api/account', accountRouter);
+
 /* ---------- 前端公开内容 ---------- */
 
 app.get('/api/content', (_req: Request, res: Response) => {
@@ -134,6 +139,8 @@ app.get('/api/audio/:id', (req: Request, res: Response) => {
 /* ---------- 后台 ---------- */
 
 app.use('/api/admin', requireAdmin);
+
+app.use('/api/admin/customers', adminCustomersRouter);
 
 app.get('/api/admin/overview', (_req: Request, res: Response) => {
   res.json({

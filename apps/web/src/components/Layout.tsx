@@ -1,5 +1,6 @@
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useProgress } from './ProgressContext';
+import { useAuth } from './AuthContext';
 import { dueCards } from '../lib/progress';
 import { VOCAB_IDS } from '../content/vocab';
 import GhibliBackground from './GhibliBackground';
@@ -16,9 +17,19 @@ const TABS = [
 ];
 
 export default function Layout() {
+  const { user, logout, notice, setNotice } = useAuth();
   const { state } = useProgress();
   const due = Math.min(dueCards(state, VOCAB_IDS).length, 20);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const current = `${location.pathname}${location.search}`;
+  const next = location.pathname === '/login' || location.pathname === '/register' ? '/' : current;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
 
   return (
     <>
@@ -34,8 +45,7 @@ export default function Layout() {
             </span>
             <span>
               <span className="logo-text">越语学堂</span>
-              {/* 未登录时显示「游客」，接入登录后替换为当前用户名 */}
-              <span className="logo-sub">游客</span>
+              <span className="logo-sub">{user ? user.username : '游客'}</span>
             </span>
           </Link>
           <nav className="nav-tabs" aria-label="主导航">
@@ -51,13 +61,35 @@ export default function Layout() {
             ))}
           </nav>
           <VoiceToggle />
-          {due > 0 && (
-            <Link to="/review" className="due-badge" aria-label={`今日待复习 ${due} 个词条`}>
-              待复习 <strong>{due}</strong>
-            </Link>
+          {user ? (
+            <div className="flex gap8" style={{ alignItems: 'center' }}>
+              {due > 0 && (
+                <Link to="/review" className="due-badge" aria-label={`今日待复习 ${due} 个词条`}>
+                  待复习 <strong>{due}</strong>
+                </Link>
+              )}
+              <button type="button" className="btn btn-sm" onClick={handleLogout}>登出</button>
+            </div>
+          ) : (
+            <div className="flex gap8" style={{ alignItems: 'center' }}>
+              <Link to={`/login?next=${encodeURIComponent(next)}`} className="btn btn-sm">登录</Link>
+              <Link to={`/register?next=${encodeURIComponent(next)}`} className="btn btn-sm btn-primary">注册</Link>
+            </div>
           )}
         </div>
       </header>
+      {notice && (
+        <div className="container" style={{ position: 'relative', zIndex: 1, paddingTop: 14 }}>
+          <div
+            className="card"
+            style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', padding: '10px 16px', borderColor: 'var(--orange)' }}
+          >
+            <span style={{ fontSize: 13.5, flex: 1 }}>{notice}</span>
+            {!user && <Link to={`/login?next=${encodeURIComponent(next)}`} className="btn btn-sm btn-primary">去登录</Link>}
+            <button type="button" className="btn btn-sm" onClick={() => setNotice(null)}>关闭</button>
+          </div>
+        </div>
+      )}
       <main style={{ position: 'relative', zIndex: 1 }}>
         <div key={location.pathname} className="route-fade">
           <Outlet />

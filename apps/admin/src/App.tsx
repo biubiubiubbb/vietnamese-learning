@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate, RouterProvider, Link } from 'react-route
 import AdminLayout from './AdminLayout';
 import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
+import AdminCustomers from './AdminCustomers';
+import AdminCustomerDetail from './AdminCustomerDetail';
 import AdminUnits from './AdminUnits';
 import AdminVocab from './AdminVocab';
 import AdminSentences from './AdminSentences';
@@ -27,6 +29,8 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { index: true, element: <AdminDashboard /> },
+      { path: 'customers', element: <AdminCustomers /> },
+      { path: 'customers/:id', element: <AdminCustomerDetail /> },
       { path: 'units', element: <AdminUnits /> },
       { path: 'vocab', element: <AdminVocab /> },
       { path: 'sentences', element: <AdminSentences /> },

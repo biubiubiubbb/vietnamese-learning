@@ -9,7 +9,7 @@ const VOICE_KEYS = Object.keys(VOICES);
 const queue: AudioJob[] = [];
 const queued = new Set<string>();
 let running = 0;
-const CONCURRENCY = 2;
+const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY) || 4;
 
 function keyOf(text: string, voice: string) {
   return `${voice}:${text}`;
@@ -23,10 +23,25 @@ function enqueue(text: string, voice: string) {
   pump();
 }
 
+async function synthesizeWithRetry(text: string, voice: string) {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await synthesize(text, voice);
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+      // Edge 语音服务偶发连接超时，指数退避后重试
+      const delay = Math.min(20_000, 2_000 * 2 ** (attempt - 1)) + Math.random() * 1_000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('音频生成失败');
+}
+
 async function runJob(job: AudioJob) {
   const { text, voice } = job;
   try {
-    const buffer = await synthesize(text, voice);
+    const buffer = await synthesizeWithRetry(text, voice);
     db.prepare(
       `UPDATE audio_assets
        SET data = ?, mime = 'audio/mpeg', source = CASE WHEN source = 'recorded' THEN source ELSE 'generated' END,

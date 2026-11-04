@@ -1,5 +1,3 @@
-const KEY = 'vi-learn:v1';
-
 export interface QuizScore {
   correct: number;
   total: number;
@@ -21,7 +19,7 @@ export interface ProgressState {
 const BOX_DAYS = [0, 1, 2, 4, 7, 15];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function createDefaultState(): ProgressState {
+export function emptyProgress(): ProgressState {
   return { completedLessons: [], scores: {}, cards: {}, sentenceCards: {} };
 }
 
@@ -29,30 +27,6 @@ function createDefaultState(): ProgressState {
 function nextCard(prev: CardState | undefined, grade: 'again' | 'good'): CardState {
   const box = grade === 'good' ? Math.min((prev?.box ?? 0) + 1, 5) : 1;
   return { box, due: Date.now() + BOX_DAYS[box] * DAY_MS };
-}
-
-export function loadProgress(): ProgressState {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return createDefaultState();
-    const parsed = JSON.parse(raw) as Partial<ProgressState>;
-    return {
-      completedLessons: parsed.completedLessons ?? [],
-      scores: parsed.scores ?? {},
-      cards: parsed.cards ?? {},
-      sentenceCards: parsed.sentenceCards ?? {},
-    };
-  } catch {
-    return createDefaultState();
-  }
-}
-
-export function saveProgress(state: ProgressState): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* 忽略存储失败 */
-  }
 }
 
 export function completeLesson(state: ProgressState, lessonId: string): ProgressState {
@@ -106,13 +80,4 @@ export function dueCards(state: ProgressState, allVocabIds: string[], now = Date
 
 export function dueSentences(state: ProgressState, allSentenceIds: string[], now = Date.now()): string[] {
   return dueIds(state.sentenceCards, allSentenceIds, now);
-}
-
-export function resetProgress(): ProgressState {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {
-    /* 忽略 */
-  }
-  return createDefaultState();
 }
