@@ -4,7 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const DATA_DIR = path.join(ROOT, 'data');
+// 容器部署（如 Railway）时通过 DATA_DIR 指向挂载的持久卷
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 export const ROOT_DIR = ROOT;
