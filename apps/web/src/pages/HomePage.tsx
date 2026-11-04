@@ -5,6 +5,7 @@ import { SENTENCE_IDS } from '../content/sentences';
 import { TONES } from '../content/pronunciation';
 import { useProgress } from '../components/ProgressContext';
 import { dueCards, dueSentences } from '../lib/progress';
+import { selectCurrentUnit } from '../lib/homeView';
 import ProgressBar from '../components/ProgressBar';
 
 export default function HomePage() {
@@ -23,8 +24,8 @@ export default function HomePage() {
   const doneCount = state.completedLessons.length;
   const dueWord = Math.min(dueCards(state, VOCAB_IDS).length, 20);
   const dueSentence = Math.min(dueSentences(state, SENTENCE_IDS).length, 20);
-  const currentUnit = UNITS.find((u) => u.lessonIds.includes(nextLesson.id)) ?? UNITS[0];
-  const unitStat = unitProgress(currentUnit, state.completedLessons);
+  const currentUnit = selectCurrentUnit(UNITS, nextLesson.id);
+  const unitStat = currentUnit ? unitProgress(currentUnit, state.completedLessons) : { done: 0, total: 0 };
   const unitPct = unitStat.total ? (unitStat.done / unitStat.total) * 100 : 0;
 
   return (
@@ -88,35 +89,37 @@ export default function HomePage() {
       </section>
 
       {/* 当前单元 */}
-      <section className="section">
-        <div className="section-head spread">
-          <h2 style={{ fontSize: 24 }}>当前单元</h2>
-          <Link to="/learn" className="btn btn-sm">查看完整课程地图 →</Link>
-        </div>
-        <div className="card" style={{ padding: 22 }}>
-          <div className="flex spread wrap gap16">
-            <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-              <div className="flex gap8 wrap mb8">
-                <span className="level-tag">单元 {String(currentUnit.order).padStart(2, '0')}</span>
-                <span className="chip chip-sky" style={{ fontSize: 12 }}>{currentUnit.level}</span>
+      {currentUnit && (
+        <section className="section">
+          <div className="section-head spread">
+            <h2 style={{ fontSize: 24 }}>当前单元</h2>
+            <Link to="/learn" className="btn btn-sm">查看完整课程地图 →</Link>
+          </div>
+          <div className="card" style={{ padding: 22 }}>
+            <div className="flex spread wrap gap16">
+              <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+                <div className="flex gap8 wrap mb8">
+                  <span className="level-tag">单元 {String(currentUnit.order).padStart(2, '0')}</span>
+                  <span className="chip chip-sky" style={{ fontSize: 12 }}>{currentUnit.level}</span>
+                </div>
+                <h3 style={{ marginBottom: 4 }}>{currentUnit.title}</h3>
+                <div className="muted" style={{ fontSize: 13, marginBottom: 12 }}>{currentUnit.subtitle}</div>
+                <ProgressBar value={unitPct} height={12} />
+                <div className="muted mt8" style={{ fontSize: 13 }}>
+                  本单元 {unitStat.done}/{unitStat.total} 课完成
+                </div>
               </div>
-              <h3 style={{ marginBottom: 4 }}>{currentUnit.title}</h3>
-              <div className="muted" style={{ fontSize: 13, marginBottom: 12 }}>{currentUnit.subtitle}</div>
-              <ProgressBar value={unitPct} height={12} />
-              <div className="muted mt8" style={{ fontSize: 13 }}>
-                本单元 {unitStat.done}/{unitStat.total} 课完成
+              <div style={{ flex: '0 1 260px', background: 'var(--paper)', border: '2px solid var(--card-stroke)', borderRadius: 'var(--r-md)', padding: 16 }}>
+                <div className="muted" style={{ fontSize: 13 }}>下一课</div>
+                <div style={{ fontWeight: 800, fontSize: 17, margin: '4px 0 12px' }}>{nextLesson.title}</div>
+                <Link to={`/lesson/${nextLesson.id}`} className="btn btn-primary btn-sm">
+                  {doneCount > 0 ? '继续学习' : '开始第一课'} →
+                </Link>
               </div>
-            </div>
-            <div style={{ flex: '0 1 260px', background: 'var(--paper)', border: '2px solid var(--card-stroke)', borderRadius: 'var(--r-md)', padding: 16 }}>
-              <div className="muted" style={{ fontSize: 13 }}>下一课</div>
-              <div style={{ fontWeight: 800, fontSize: 17, margin: '4px 0 12px' }}>{nextLesson.title}</div>
-              <Link to={`/lesson/${nextLesson.id}`} className="btn btn-primary btn-sm">
-                {doneCount > 0 ? '继续学习' : '开始第一课'} →
-              </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 发音热身 */}
       <section className="section">

@@ -296,16 +296,26 @@ app.delete('/api/admin/lessons/:id', (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-app.post('/api/admin/lessons/:id/restore', (req: Request, res: Response) => {
-  const lesson = db.prepare('SELECT unit_id, vocab_ids FROM lessons WHERE id = ?').get(req.params.id);
-  if (!lesson) return fail(res, 404, '课程不存在');
+/**
+ * 恢复课程前的依赖校验（单元、关联词条必须存在）。
+ * 专属恢复接口与回收站批量恢复都必须走同一套校验，否则会产生无归属单元的孤儿课程。
+ */
+function lessonRestoreIssue(id: string): { status: number; message: string } | null {
+  const lesson = db.prepare('SELECT unit_id, vocab_ids FROM lessons WHERE id = ?').get(id);
+  if (!lesson) return { status: 404, message: '课程不存在' };
   const unit = db.prepare('SELECT id FROM units WHERE id = ? AND deleted_at IS NULL').get(lesson.unit_id);
-  if (!unit) return fail(res, 409, '所属单元已删除，请先恢复单元');
+  if (!unit) return { status: 409, message: '所属单元已删除，请先恢复单元' };
   const missingVocab = jsonParse<string[]>(lesson.vocab_ids, [])
     .filter((vocabId) => !db.prepare('SELECT id FROM vocab WHERE id = ? AND deleted_at IS NULL').get(vocabId));
   if (missingVocab.length > 0) {
-    return fail(res, 409, `引用的词条已删除：${missingVocab.join('、')}，请先恢复词条`);
+    return { status: 409, message: `引用的词条已删除：${missingVocab.join('、')}，请先恢复词条` };
   }
+  return null;
+}
+
+app.post('/api/admin/lessons/:id/restore', (req: Request, res: Response) => {
+  const issue = lessonRestoreIssue(String(req.params.id));
+  if (issue) return fail(res, issue.status, issue.message);
   db.prepare('UPDATE lessons SET deleted_at = NULL WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
@@ -623,8 +633,20 @@ app.get('/api/admin/trash', (_req: Request, res: Response) => {
 
 app.post('/api/admin/trash/:type/:id/restore', (req: Request, res: Response) => {
   const tables: Record<string, string> = { units: 'units', lessons: 'lessons', vocab: 'vocab', sentences: 'sentences' };
-  const table = tables[String(req.params.type)];
+  const type = String(req.params.type);
+  const table = tables[type];
   if (!table) return fail(res, 400, '未知类型');
+  // 回收站批量恢复与专属恢复接口共用同一套依赖校验，避免恢复出孤儿内容。
+  if (type === 'lessons') {
+    const issue = lessonRestoreIssue(String(req.params.id));
+    if (issue) return fail(res, issue.status, issue.message);
+  }
+  if (type === 'sentences') {
+    const sentence = db.prepare('SELECT lesson_id FROM sentences WHERE id = ?').get(req.params.id);
+    if (!sentence) return fail(res, 404, '内容不存在');
+    const lesson = db.prepare('SELECT id FROM lessons WHERE id = ? AND deleted_at IS NULL').get(sentence.lesson_id);
+    if (!lesson) return fail(res, 409, '所属课程已删除，请先恢复课程');
+  }
   const result = db.prepare(`UPDATE ${table} SET deleted_at = NULL WHERE id = ?`).run(req.params.id);
   if (!result.changes) return fail(res, 404, '内容不存在');
   res.json({ ok: true });

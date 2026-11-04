@@ -8,6 +8,7 @@
     "build": "tsup",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
     "audio:generate": "tsx scripts/generate-audio.ts"
   },
   "dependencies": {
