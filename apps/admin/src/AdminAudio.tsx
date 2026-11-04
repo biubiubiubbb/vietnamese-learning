@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, apiUrl } from './api';
 import {
@@ -8,7 +8,6 @@ import {
   Loading,
   Modal,
   Select,
-  StatusChip,
   TextInput,
   useNotice,
 } from './ui';
@@ -24,8 +23,12 @@ interface AudioAsset {
   bytes: number;
 }
 
+type AudioType = 'word' | 'sentence' | 'pronunciation';
+
 interface AudioGroup {
   text: string;
+  type: AudioType;
+  zh: string;
   female: AudioAsset | null;
   male: AudioAsset | null;
   human: AudioAsset | null;
@@ -39,11 +42,170 @@ interface AudioList {
 }
 
 const VOICE_LABEL: Record<string, string> = { female: '女声', male: '男声', human: '人声' };
+const TYPE_LABEL: Record<AudioType, string> = { word: '单词', sentence: '句子', pronunciation: '发音' };
+const TYPE_OPTIONS: Array<{ value: '' | AudioType; label: string }> = [
+  { value: '', label: '全部' },
+  { value: 'word', label: '单词' },
+  { value: 'sentence', label: '句子' },
+  { value: 'pronunciation', label: '发音' },
+];
+
+function isReady(asset: AudioAsset | null): asset is AudioAsset {
+  return !!asset && asset.status === 'ready' && asset.bytes > 0;
+}
+
+function isPlayable(asset: AudioAsset | null) {
+  return isReady(asset) && asset.enabled;
+}
+
+function isGenerating(asset: AudioAsset | null) {
+  return !!asset && (asset.status === 'pending' || asset.status === 'generating');
+}
+
+function isFailed(asset: AudioAsset | null) {
+  return !!asset && asset.status === 'failed';
+}
 
 function formatTime(seconds: number) {
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
   return `${mm}:${ss}`;
+}
+
+function FemaleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="10" cy="8" r="5" />
+      <path d="M10 13v6M7 16h6" />
+    </svg>
+  );
+}
+
+function MaleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="8" cy="11" r="5" />
+      <path d="M11.6 7.4L17 2M13 2h4v4" />
+    </svg>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="7" y="2" width="6" height="9" rx="3" />
+      <path d="M4 10a6 6 0 0 0 12 0M10 16v3" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M6 3l10 7-10 7z" />
+    </svg>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M3 8a7 7 0 1 1 2 5" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
+function SpeakerIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M4 8h3l4-3v10l-4-3H4z" />
+      <path d="M14 7c1.2 1.6 1.2 4.4 0 6" />
+    </svg>
+  );
+}
+
+function VoiceBadge({ voice, asset }: { voice: 'female' | 'male' | 'human'; asset: AudioAsset | null }) {
+  const playable = isPlayable(asset);
+  const generating = isGenerating(asset);
+  const failed = isFailed(asset);
+  const tone = playable ? voice : 'off';
+  const label = asset
+    ? generating
+      ? `${VOICE_LABEL[voice]}生成中`
+      : failed
+        ? `${VOICE_LABEL[voice]}生成失败${asset.error ? `：${asset.error}` : ''}`
+        : playable
+          ? `${VOICE_LABEL[voice]}可用`
+          : `${VOICE_LABEL[voice]}已停用`
+    : voice === 'human'
+      ? '未录制'
+      : `${VOICE_LABEL[voice]}缺失`;
+
+  return (
+    <span className={`audio-voice audio-voice-${tone}`} title={label} aria-label={label}>
+      {voice === 'female' ? <FemaleIcon /> : voice === 'male' ? <MaleIcon /> : <MicIcon />}
+      {generating && <span className="audio-voice-ring" />}
+      {failed && <span className="audio-voice-dot" />}
+    </span>
+  );
+}
+
+function AudioSwitch({
+  on,
+  mid = false,
+  label,
+  disabled = false,
+  onClick,
+}: {
+  on: boolean;
+  mid?: boolean;
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      title={label}
+      className={`audio-switch${on ? ' on' : ''}${mid ? ' mid' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <SpeakerIcon />
+      <span className="audio-track"><span className="audio-knob" /></span>
+    </button>
+  );
+}
+
+function IconButton({
+  label,
+  tone = 'plain',
+  disabled = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  tone?: 'plain' | 'female' | 'male' | 'human' | 'orange';
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={`audio-icon-btn audio-icon-btn-${tone}`}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function AdminAudio() {
@@ -53,6 +215,7 @@ export default function AdminAudio() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState(params.get('status') ?? '');
+  const [typeFilter, setTypeFilter] = useState<'' | AudioType>('');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -69,15 +232,22 @@ export default function AdminAudio() {
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const notice = useNotice();
 
-  const load = async (nextPage = page) => {
+  const load = async (
+    nextPage = page,
+    filters?: { q?: string; type?: '' | AudioType; status?: string },
+  ) => {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams();
       params.set('page', String(nextPage));
       params.set('pageSize', String(pageSize));
-      if (status) params.set('status', status);
-      if (query.trim()) params.set('q', query.trim());
+      const nextQuery = filters?.q ?? query;
+      const nextType = filters?.type ?? typeFilter;
+      const nextStatus = filters?.status ?? status;
+      if (nextStatus) params.set('status', nextStatus);
+      if (nextType) params.set('type', nextType);
+      if (nextQuery.trim()) params.set('q', nextQuery.trim());
       const data = await api.get<AudioList>(`/api/admin/audio?${params}`);
       setRows(data.items);
       setTotal(data.total);
@@ -90,20 +260,28 @@ export default function AdminAudio() {
     }
   };
 
-  useEffect(() => { load(1); }, [status, pageSize]);
+  useEffect(() => { load(1); }, [status, pageSize, typeFilter]);
 
   useEffect(() => {
     const generating = rows.some((row) =>
-      [row.female, row.male].some((asset) => asset?.status === 'pending' || asset?.status === 'generating'),
+      [row.female, row.male].some((asset) => isGenerating(asset)),
     );
     if (!generating) return;
     const timer = setInterval(() => { load(); }, 4000);
     return () => clearInterval(timer);
-  }, [rows, page, pageSize, status, query]);
+  }, [rows, page, pageSize, status, typeFilter, query]);
 
   const search = () => {
     setPage(1);
     load(1);
+  };
+
+  const clearFilters = () => {
+    setQuery('');
+    setTypeFilter('');
+    setStatus('');
+    setPage(1);
+    load(1, { q: '', type: '', status: '' });
   };
 
   const preview = (asset: AudioAsset | null) => {
@@ -117,23 +295,47 @@ export default function AdminAudio() {
     audio.play().catch(() => notice.err('无法播放该音频'));
   };
 
-  const regenerate = async (asset: AudioAsset | null) => {
-    if (!asset) return;
-    if (asset.voice === 'human') return;
+  const systemAssets = (row: AudioGroup) => [row.female, row.male].filter((asset): asset is AudioAsset => !!asset);
+
+  const missingVoices = (row: AudioGroup) => {
+    const voices: Array<'female' | 'male'> = [];
+    if (!isGenerating(row.female) && !isReady(row.female)) voices.push('female');
+    if (!isGenerating(row.male) && !isReady(row.male)) voices.push('male');
+    return voices;
+  };
+
+  const toggleSystem = async (row: AudioGroup) => {
+    const assets = systemAssets(row);
+    if (assets.length === 0) return;
+    const next = !assets.every((asset) => asset.enabled);
     try {
-      await api.post(`/api/admin/audio/${asset.id}/regenerate`);
-      notice.ok(`已提交${VOICE_LABEL[asset.voice]}重新生成`);
+      await Promise.all(
+        assets.map((asset) => api.patch(`/api/admin/audio/${asset.id}`, { enabled: next })),
+      );
+      notice.ok(next ? '系统音已启用' : '系统音已停用');
       await load();
     } catch (e) {
       notice.err((e as Error).message);
     }
   };
 
-  const toggleEnabled = async (asset: AudioAsset | null) => {
+  const toggleAsset = async (asset: AudioAsset | null) => {
     if (!asset) return;
     try {
       await api.patch(`/api/admin/audio/${asset.id}`, { enabled: !asset.enabled });
       notice.ok(`${VOICE_LABEL[asset.voice]}已${asset.enabled ? '停用' : '启用'}`);
+      await load();
+    } catch (e) {
+      notice.err((e as Error).message);
+    }
+  };
+
+  const regenerateRow = async (row: AudioGroup) => {
+    const voices = missingVoices(row);
+    if (voices.length === 0) return;
+    try {
+      await api.post<{ queued: number }>('/api/admin/audio/regenerate', { text: row.text, voices });
+      notice.ok(`已提交${voices.map((voice) => VOICE_LABEL[voice]).join('、')}生成`);
       await load();
     } catch (e) {
       notice.err((e as Error).message);
@@ -240,20 +442,6 @@ export default function AdminAudio() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const renderSystemCell = (asset: AudioAsset | null) => (
-    <div>
-      <div style={{ marginBottom: 5 }}>
-        {asset ? <StatusChip status={asset.enabled ? asset.status : 'disabled'} /> : <span className="admin-status admin-status-pending">待生成</span>}
-      </div>
-      <div className="admin-row-actions">
-        <Button onClick={() => preview(asset)} disabled={!asset?.enabled || asset?.status !== 'ready'}>试听</Button>
-        <Button onClick={() => regenerate(asset)} disabled={!asset || asset.status === 'generating'}>重生成</Button>
-        {asset && <Button variant={asset.enabled ? 'danger' : 'default'} onClick={() => toggleEnabled(asset)}>{asset.enabled ? '停用' : '启用'}</Button>}
-      </div>
-      {asset?.error && <div className="muted" style={{ fontSize: 11 }}>{asset.error}</div>}
-    </div>
-  );
-
   return (
     <AdminPage
       title="音频管理"
@@ -262,15 +450,32 @@ export default function AdminAudio() {
       {notice.notice && <Banner tone={notice.notice.tone}>{notice.notice.text}</Banner>}
       {error && <Banner tone="err">{error}</Banner>}
       <div className="admin-toolbar">
-        <TextInput value={query} onChange={setQuery} placeholder="搜索朗读文本" />
+        <TextInput
+          value={query}
+          onChange={setQuery}
+          placeholder="搜索越南语或中文释义"
+          onKeyDown={(event) => { if (event.key === 'Enter') search(); }}
+        />
         <Button onClick={search}>搜索</Button>
+        <div className="admin-seg" role="group" aria-label="内容类型">
+          {TYPE_OPTIONS.map((option) => (
+            <button
+              key={option.value || 'all'}
+              type="button"
+              className={`admin-seg-item${typeFilter === option.value ? ' on' : ''}`}
+              onClick={() => setTypeFilter(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         <Select
           value={status}
           onChange={(value) => { setStatus(value); setPage(1); }}
           options={[
             { value: '', label: '全部状态' },
-            { value: 'ready', label: '已就绪' },
             { value: 'pending', label: '待生成' },
+            { value: 'missing', label: '有缺失' },
             { value: 'generating', label: '生成中' },
             { value: 'failed', label: '失败' },
             { value: 'disabled', label: '已停用' },
@@ -281,32 +486,109 @@ export default function AdminAudio() {
           onChange={(value) => { setPageSize(Number(value)); setPage(1); }}
           options={[{ value: '20', label: '20 条/页' }, { value: '50', label: '50 条/页' }, { value: '100', label: '100 条/页' }]}
         />
-        <span className="muted" style={{ fontSize: 12.5 }}>共 {total} 条文本</span>
+        <span className="muted" style={{ fontSize: 12.5 }}>共 {total} 条内容</span>
       </div>
 
       {loading ? <Loading /> : (
         <div className="admin-table-wrap">
-          <table className="admin-table" style={{ minWidth: 900 }}>
-            <thead><tr><th>文本</th><th>女声（系统）</th><th>男声（系统）</th><th>人声（录制）</th></tr></thead>
+          <table className="admin-table audio-table">
+            <thead><tr><th>内容</th><th>系统音</th><th>人声</th></tr></thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.text}>
-                  <td className="vi" style={{ maxWidth: 260 }}>{row.text}</td>
-                  <td>{renderSystemCell(row.female)}</td>
-                  <td>{renderSystemCell(row.male)}</td>
-                  <td>
-                    <div style={{ marginBottom: 5 }}>
-                      {row.human ? <StatusChip status={row.human.enabled ? 'ready' : 'disabled'} /> : <span className="admin-status admin-status-pending">未录制</span>}
-                    </div>
-                    <div className="admin-row-actions">
-                      {row.human && <Button onClick={() => preview(row.human)} disabled={!row.human.enabled}>试听</Button>}
-                      <Button onClick={() => openRecorder(row.text)}>{row.human ? '重录' : '录音'}</Button>
-                      {row.human && <Button variant={row.human.enabled ? 'danger' : 'default'} onClick={() => toggleEnabled(row.human)}>{row.human.enabled ? '停用' : '启用'}</Button>}
+              {rows.map((row) => {
+                const system = systemAssets(row);
+                const allOn = system.length > 0 && system.every((asset) => asset.enabled);
+                const mid = system.some((asset) => asset.enabled) && !allOn;
+                const voices = missingVoices(row);
+                const regenLabel = voices.length > 0
+                  ? `补齐${voices.map((voice) => VOICE_LABEL[voice]).join('、')}`
+                  : system.some((asset) => isGenerating(asset))
+                    ? '系统音生成中'
+                    : '女声与男声均已生成';
+
+                return (
+                  <tr key={row.text}>
+                    <td>
+                      <div className="audio-content">
+                        <div className="vi audio-vi" title={row.text}>{row.text}</div>
+                        <div className="audio-meaning">
+                          {row.zh || '—'}
+                          <span className={`audio-type-tag audio-type-${row.type}`}>{TYPE_LABEL[row.type]}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="audio-line">
+                        <VoiceBadge voice="female" asset={row.female} />
+                        <VoiceBadge voice="male" asset={row.male} />
+                        <AudioSwitch
+                          on={allOn}
+                          mid={mid}
+                          label={allOn ? '系统音已启用' : mid ? '系统音部分启用' : '系统音已停用'}
+                          disabled={system.length === 0}
+                          onClick={() => toggleSystem(row)}
+                        />
+                      </div>
+                      <div className="audio-line audio-actions">
+                        <IconButton
+                          tone="female"
+                          label={isPlayable(row.female) ? '试听女声' : '女声不可用'}
+                          disabled={!isPlayable(row.female)}
+                          onClick={() => preview(row.female)}
+                        ><PlayIcon /></IconButton>
+                        <IconButton
+                          tone="male"
+                          label={isPlayable(row.male) ? '试听男声' : '男声不可用'}
+                          disabled={!isPlayable(row.male)}
+                          onClick={() => preview(row.male)}
+                        ><PlayIcon /></IconButton>
+                        <IconButton
+                          tone={voices.length > 0 ? 'orange' : 'plain'}
+                          label={regenLabel}
+                          disabled={voices.length === 0}
+                          onClick={() => regenerateRow(row)}
+                        ><RefreshIcon /></IconButton>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="audio-line">
+                        <VoiceBadge voice="human" asset={row.human} />
+                        {row.human && (
+                          <AudioSwitch
+                            on={row.human.enabled}
+                            label={row.human.enabled ? '人声已启用' : '人声已停用'}
+                            onClick={() => toggleAsset(row.human)}
+                          />
+                        )}
+                      </div>
+                      <div className="audio-line audio-actions">
+                        {row.human && (
+                          <IconButton
+                            tone="human"
+                            label={isPlayable(row.human) ? '试听人声' : '人声不可用'}
+                            disabled={!isPlayable(row.human)}
+                            onClick={() => preview(row.human)}
+                          ><PlayIcon /></IconButton>
+                        )}
+                        <IconButton
+                          tone="human"
+                          label={row.human ? '重新录制人声' : '录制人声'}
+                          onClick={() => openRecorder(row.text)}
+                        ><MicIcon /></IconButton>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={3}>
+                    <div className="admin-empty">
+                      <span>没有符合条件的音频</span>
+                      <Button variant="ghost" onClick={clearFilters}>清除筛选</Button>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {rows.length === 0 && <tr><td colSpan={4}><div className="admin-empty">没有符合条件的音频</div></td></tr>}
+              )}
             </tbody>
           </table>
         </div>

@@ -153,6 +153,76 @@ export function collectReadableTexts(): string[] {
   return [...texts];
 }
 
+export type AudioTextType = 'word' | 'sentence' | 'pronunciation';
+
+export interface AudioTextMeta {
+  type: AudioTextType;
+  zh: string;
+}
+
+/** 每条朗读文本的类型与中文释义，类型按「发音 > 句子 > 单词」收敛。 */
+export function collectReadableTextMeta(): Map<string, AudioTextMeta> {
+  const wordZh = new Map<string, string>();
+  const sentenceZh = new Map<string, string>();
+  const pronunciationZh = new Map<string, string>();
+
+  const put = (map: Map<string, string>, text: unknown, zh: unknown) => {
+    const vi = String(text ?? '').trim();
+    if (!vi) return;
+    const meaning = String(zh ?? '').trim();
+    if (!map.has(vi) || (!map.get(vi) && meaning)) map.set(vi, meaning);
+  };
+
+  for (const row of db.prepare('SELECT vi, zh, example_vi, example_zh FROM vocab WHERE deleted_at IS NULL').all()) {
+    put(wordZh, row.vi, row.zh);
+    put(sentenceZh, row.example_vi, row.example_zh);
+  }
+  for (const row of db.prepare('SELECT grammar, dialogues, exercises FROM lessons WHERE deleted_at IS NULL').all()) {
+    for (const grammar of jsonParse<any[]>(row.grammar, [])) {
+      for (const example of grammar.examples ?? []) put(sentenceZh, example.vi, example.zh);
+    }
+    for (const dialogue of jsonParse<any[]>(row.dialogues, [])) {
+      for (const line of dialogue.lines ?? []) put(sentenceZh, line.vi, line.zh);
+    }
+    for (const exercise of jsonParse<any[]>(row.exercises, [])) put(sentenceZh, exercise.audioText, '');
+  }
+  for (const row of db.prepare('SELECT vi, zh FROM sentences WHERE deleted_at IS NULL').all()) {
+    put(sentenceZh, row.vi, row.zh);
+  }
+
+  const pronunciation = getPronunciation();
+  for (const item of pronunciation.alphabet) put(pronunciationZh, item.name, item.zhApprox);
+  for (const item of pronunciation.tones) put(pronunciationZh, item.example?.vi, item.example?.zh);
+  for (const group of [...pronunciation.consonantGroups, ...pronunciation.vowelGroups]) {
+    for (const item of group.items ?? []) put(pronunciationZh, item.example?.vi, item.example?.zh);
+  }
+  for (const pair of pronunciation.minimalPairs) {
+    (pair.pair ?? []).forEach((vi: string, index: number) => put(pronunciationZh, vi, pair.zh?.[index]));
+  }
+  for (const rule of pronunciation.toneRules) {
+    for (const example of rule.examples ?? []) put(pronunciationZh, example.vi, example.zh);
+  }
+
+  const texts = new Set<string>([
+    ...wordZh.keys(),
+    ...sentenceZh.keys(),
+    ...pronunciationZh.keys(),
+  ]);
+  const meta = new Map<string, AudioTextMeta>();
+  for (const text of texts) {
+    const pronunciationMeaning = pronunciationZh.get(text) ?? '';
+    const sentenceMeaning = sentenceZh.get(text) ?? '';
+    const wordMeaning = wordZh.get(text) ?? '';
+    const type: AudioTextType = pronunciationZh.has(text)
+      ? 'pronunciation'
+      : sentenceZh.has(text)
+        ? 'sentence'
+        : 'word';
+    meta.set(text, { type, zh: sentenceMeaning || wordMeaning || pronunciationMeaning });
+  }
+  return meta;
+}
+
 export function getCounts() {
   return {
     units: db.prepare('SELECT COUNT(*) AS n FROM units WHERE deleted_at IS NULL').get().n,

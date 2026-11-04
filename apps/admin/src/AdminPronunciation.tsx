@@ -4,7 +4,6 @@ import type { PronunciationData } from '@viet/shared/pronunciation';
 import {
   AlphabetEditor,
   MinimalPairsEditor,
-  PronunciationSaveButton,
   SoundGroupsEditor,
   ToneRulesEditor,
   TonesEditor,
@@ -12,20 +11,25 @@ import {
 import {
   AdminPage,
   Banner,
+  Button,
   Card,
+  Icon,
   Loading,
+  StatusDot,
   useNotice,
+  useUnsavedGuard,
+  type IconName,
 } from './ui';
 
 type PronKey = keyof PronunciationData;
 
-const TABS: Array<{ key: PronKey; label: string }> = [
-  { key: 'alphabet', label: '字母' },
-  { key: 'tones', label: '声调' },
-  { key: 'consonantGroups', label: '声母组' },
-  { key: 'vowelGroups', label: '韵母组' },
-  { key: 'minimalPairs', label: '最小对立体' },
-  { key: 'toneRules', label: '标调规则' },
+const TABS: Array<{ key: PronKey; label: string; icon: IconName }> = [
+  { key: 'alphabet', label: '字母', icon: 'letter' },
+  { key: 'tones', label: '声调', icon: 'tone' },
+  { key: 'consonantGroups', label: '声母组', icon: 'wave' },
+  { key: 'vowelGroups', label: '韵母组', icon: 'wave' },
+  { key: 'minimalPairs', label: '最小对立体', icon: 'pair' },
+  { key: 'toneRules', label: '标调规则', icon: 'rule' },
 ];
 
 export default function AdminPronunciation() {
@@ -33,12 +37,15 @@ export default function AdminPronunciation() {
   const [active, setActive] = useState<PronKey>('alphabet');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const notice = useNotice();
+  useUnsavedGuard(dirty);
 
   const load = async () => {
     setLoading(true);
     try {
       setData(await api.get<PronunciationData>('/api/admin/pronunciation'));
+      setDirty(false);
     } catch (e) {
       notice.err((e as Error).message);
     } finally {
@@ -50,6 +57,7 @@ export default function AdminPronunciation() {
 
   const update = <K extends PronKey>(key: K, value: PronunciationData[K]) => {
     setData((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setDirty(true);
   };
 
   const save = async () => {
@@ -59,6 +67,7 @@ export default function AdminPronunciation() {
       await Promise.all(
         TABS.map((tab) => api.put(`/api/admin/pronunciation/${tab.key}`, { payload: data[tab.key] })),
       );
+      setDirty(false);
       notice.ok('已保存');
     } catch (e) {
       notice.err((e as Error).message);
@@ -68,7 +77,10 @@ export default function AdminPronunciation() {
   };
 
   return (
-    <AdminPage title="发音中心">
+    <AdminPage
+      title="发音中心"
+      subtitle="按板块编辑，所有板块随保存条一次性提交。"
+    >
       {notice.notice && <Banner tone={notice.notice.tone}>{notice.notice.text}</Banner>}
       {loading ? <Loading /> : data && (
         <>
@@ -79,8 +91,11 @@ export default function AdminPronunciation() {
                 type="button"
                 className={`admin-tab${active === tab.key ? ' on' : ''}`}
                 onClick={() => setActive(tab.key)}
+                title={`${tab.label} ${(data[tab.key] as unknown[]).length} 条`}
               >
-                {tab.label}（{(data[tab.key] as unknown[]).length}）
+                <Icon name={tab.icon} />
+                {tab.label}
+                <span className="admin-seg-count">{(data[tab.key] as unknown[]).length}</span>
               </button>
             ))}
           </div>
@@ -95,8 +110,14 @@ export default function AdminPronunciation() {
             )}
             {active === 'minimalPairs' && <MinimalPairsEditor value={data.minimalPairs} onChange={(value) => update('minimalPairs', value)} />}
             {active === 'toneRules' && <ToneRulesEditor value={data.toneRules} onChange={(value) => update('toneRules', value)} />}
-            <PronunciationSaveButton saving={saving} onSave={save} />
           </Card>
+          <div className="admin-savebar">
+            <span className="admin-savebar-status">
+              <StatusDot tone={dirty ? 'danger' : 'green'} label={dirty ? '有未保存修改' : '已保存'} />
+              {dirty ? '有未保存修改' : '已保存'}
+            </span>
+            <Button variant="primary" onClick={save} loading={saving} disabled={!dirty}>保存全部板块</Button>
+          </div>
         </>
       )}
     </AdminPage>

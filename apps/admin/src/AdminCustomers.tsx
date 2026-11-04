@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AdminPage, Banner, Button, Card, Empty, Loading, Modal, Select, TextInput, useNotice } from './ui';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  AdminPage,
+  Banner,
+  Button,
+  Card,
+  ConfirmDialog,
+  Empty,
+  Icon,
+  IconButton,
+  Loading,
+  Select,
+  TextInput,
+  useNotice,
+} from './ui';
 import { customerApi, formatTime, type CustomerListResponse, type CustomerListRow } from './customerApi';
 
 const STATUS_OPTIONS = [
@@ -9,16 +22,19 @@ const STATUS_OPTIONS = [
   { value: 'disabled', label: '已禁用' },
 ];
 
-function StatusChip({ status }: { status: CustomerListRow['status'] }) {
-  return status === 'normal' ? (
-    <span className="admin-status admin-status-ready">正常</span>
-  ) : (
-    <span className="admin-status admin-status-disabled">已禁用</span>
+function AccountState({ status }: { status: CustomerListRow['status'] }) {
+  const normal = status === 'normal';
+  return (
+    <span className={`admin-account-state${normal ? '' : ' off'}`} title={normal ? '账号正常' : '账号已禁用'}>
+      <Icon name={normal ? 'user' : 'user-off'} />
+      {normal ? '正常' : '已禁用'}
+    </span>
   );
 }
 
 export default function AdminCustomers() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';
   const page = Math.max(1, Number(params.get('page') ?? 1) || 1);
@@ -77,6 +93,7 @@ export default function AdminCustomers() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) || 1 : 1;
 
   const backParams = params.toString();
+  const detailHref = (id: string | number) => `/admin/customers/${id}${backParams ? `?${backParams}` : ''}`;
 
   return (
     <AdminPage
@@ -93,16 +110,24 @@ export default function AdminCustomers() {
             onChange={setSearchDraft}
             type="search"
             placeholder="按用户名搜索"
+            onKeyDown={(event) => { if (event.key === 'Enter') submitSearch(); }}
           />
           <Select value={status} onChange={(value) => updateParams({ status: value, page: 1 })} options={STATUS_OPTIONS} />
-          <Button variant="primary" onClick={submitSearch}>搜索</Button>
+          <Button variant="primary" onClick={submitSearch}><Icon name="search" />搜索</Button>
           {q && <Button variant="ghost" onClick={() => updateParams({ q: '', page: 1 })}>清除搜索</Button>}
         </div>
 
         {loading ? (
           <Loading />
         ) : !data || data.users.length === 0 ? (
-          <Empty>{q || status ? '没有符合条件的客户' : '还没有客户注册'}</Empty>
+          <Empty>
+            {q || status ? '没有符合条件的客户' : '还没有客户注册'}
+            {(q || status) && (
+              <div className="admin-trash-empty-action">
+                <Button onClick={() => { setSearchDraft(''); updateParams({ q: '', status: '', page: 1 }); }}>清除筛选</Button>
+              </div>
+            )}
+          </Empty>
         ) : (
           <>
             <div className="admin-table-wrap">
@@ -122,11 +147,15 @@ export default function AdminCustomers() {
                   {data.users.map((row) => {
                     const pct = data.totalLessons ? Math.ceil((row.completed / data.totalLessons) * 100) : 0;
                     return (
-                      <tr key={row.id}>
+                      <tr
+                        key={row.id}
+                        className="admin-row-clickable"
+                        onClick={() => navigate(detailHref(row.id))}
+                      >
                         <td>
                           <strong>{row.username}</strong>
                         </td>
-                        <td><StatusChip status={row.status} /></td>
+                        <td><AccountState status={row.status} /></td>
                         <td style={{ minWidth: 170 }}>
                           <div className="flex spread" style={{ fontSize: 12, marginBottom: 4 }}>
                             <span>{row.completed} / {data.totalLessons}</span>
@@ -137,22 +166,22 @@ export default function AdminCustomers() {
                         <td>{row.dueVocab + row.dueSentence} 项</td>
                         <td>{formatTime(row.lastStudyAt)}</td>
                         <td>{formatTime(row.createdAt)}</td>
-                        <td>
+                        <td onClick={(event) => event.stopPropagation()}>
                           <div className="admin-row-actions">
                             <Link
-                              className="admin-btn"
-                              to={`/admin/customers/${row.id}${backParams ? `?${backParams}` : ''}`}
+                              className="admin-icon-btn admin-icon-btn-sky"
+                              to={detailHref(row.id)}
+                              aria-label={`查看 ${row.username}`}
+                              title={`查看 ${row.username}`}
                             >
-                              查看
+                              <Icon name="eye" />
                             </Link>
-                            <Button
-                              variant={row.status === 'normal' ? 'danger' : 'default'}
-                              onClick={() =>
-                                setConfirm({ row, status: row.status === 'normal' ? 'disabled' : 'normal' })
-                              }
-                            >
-                              {row.status === 'normal' ? '禁用' : '启用'}
-                            </Button>
+                            <IconButton
+                              icon="power"
+                              label={row.status === 'normal' ? `禁用 ${row.username}` : `启用 ${row.username}`}
+                              tone={row.status === 'normal' ? 'danger' : 'green'}
+                              onClick={() => setConfirm({ row, status: row.status === 'normal' ? 'disabled' : 'normal' })}
+                            />
                           </div>
                         </td>
                       </tr>
@@ -163,49 +192,32 @@ export default function AdminCustomers() {
             </div>
 
             <div className="admin-pager">
-              <Button
-                variant="ghost"
-                disabled={page <= 1}
-                onClick={() => updateParams({ page: page - 1 })}
-              >
-                上一页
-              </Button>
+              <IconButton icon="chevron-left" label="上一页" disabled={page <= 1} onClick={() => updateParams({ page: page - 1 })} />
               <span className="muted">第 {page} / {totalPages} 页</span>
-              <Button
-                variant="ghost"
-                disabled={page >= totalPages}
-                onClick={() => updateParams({ page: page + 1 })}
-              >
-                下一页
-              </Button>
+              <IconButton icon="chevron-right" label="下一页" disabled={page >= totalPages} onClick={() => updateParams({ page: page + 1 })} />
             </div>
           </>
         )}
       </Card>
 
       {confirm && (
-        <Modal
+        <ConfirmDialog
           title={confirm.status === 'disabled' ? '禁用客户' : '启用客户'}
-          onClose={() => (busy ? undefined : setConfirm(null))}
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setConfirm(null)} disabled={busy}>取消</Button>
-              <Button variant={confirm.status === 'disabled' ? 'danger' : 'primary'} onClick={toggleStatus} disabled={busy}>
-                {busy ? '处理中…' : confirm.status === 'disabled' ? '确认禁用' : '确认启用'}
-              </Button>
-            </>
-          }
+          confirmLabel={confirm.status === 'disabled' ? '确认禁用' : '确认启用'}
+          tone={confirm.status === 'disabled' ? 'danger' : 'primary'}
+          onConfirm={toggleStatus}
+          onClose={() => setConfirm(null)}
+          busy={busy}
         >
+          <p>
+            客户 <strong>{confirm.row.username}</strong>（{confirm.row.id}）当前状态为{confirm.row.status === 'normal' ? '正常' : '已禁用'}。
+          </p>
           {confirm.status === 'disabled' ? (
-            <p>
-              禁用后客户 <strong>{confirm.row.username}</strong> 将立即退出登录，且无法再次登录；学习记录会保留，重新启用后恢复。
-            </p>
+            <p className="muted">禁用后立即退出登录且无法再次登录；学习记录保留，重新启用后恢复。</p>
           ) : (
-            <p>
-              启用后客户 <strong>{confirm.row.username}</strong> 可以重新登录，原有学习记录保持不变。
-            </p>
+            <p className="muted">启用后可重新登录，原有学习记录保持不变。</p>
           )}
-        </Modal>
+        </ConfirmDialog>
       )}
     </AdminPage>
   );

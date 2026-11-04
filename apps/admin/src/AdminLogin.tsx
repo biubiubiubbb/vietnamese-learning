@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api';
-import { Banner, Button, Field, TextInput } from './ui';
+import { Banner, Button, Field, PasswordInput, TextInput } from './ui';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!username.trim() || !password.trim()) {
-      setError('请输入账号和密码');
-      return;
-    }
+    const next: { username?: string; password?: string } = {};
+    if (!username.trim()) next.username = '请输入账号';
+    if (!password.trim()) next.password = '请输入密码';
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
     setLoading(true);
     setError('');
     try {
@@ -50,15 +52,37 @@ export default function AdminLogin() {
         </svg>
         <h1>越语学堂 · 内容中后台</h1>
         {error && <Banner tone="err">{error}</Banner>}
-        <Field label="账号">
-          <TextInput value={username} onChange={setUsername} placeholder="admin" />
-        </Field>
-        <Field label="密码">
-          <TextInput type="password" value={password} onChange={setPassword} placeholder="请输入密码" />
-        </Field>
-        <Button variant="primary" onClick={submit} disabled={loading}>
-          {loading ? '登录中…' : '登录'}
-        </Button>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+        >
+          <Field label="账号" error={errors.username}>
+            <TextInput
+              value={username}
+              onChange={(value) => {
+                setUsername(value);
+                if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }));
+              }}
+              placeholder="admin"
+            />
+          </Field>
+          <Field label="密码" error={errors.password}>
+            <PasswordInput
+              value={password}
+              onChange={(value) => {
+                setPassword(value);
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
+              placeholder="请输入密码"
+              invalid={Boolean(errors.password)}
+            />
+          </Field>
+          <Button variant="primary" type="submit" loading={loading}>
+            {loading ? '登录中…' : '登录'}
+          </Button>
+        </form>
       </div>
     </div>
   );

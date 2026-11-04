@@ -97,6 +97,14 @@ export function SoundGroupsEditor({
       create={() => ({ title: '', items: [] })}
       addLabel={addLabel}
       emptyText="还没有音组"
+      collapsible
+      defaultCollapsed
+      summary={(group) => (
+        <>
+          {group.title || '未命名分组'}
+          <span className="muted">· {group.items.length} 个音</span>
+        </>
+      )}
       render={(group, update) => (
         <>
           <Field label="分组标题"><TextInput value={group.title} onChange={(title) => update({ title })} /></Field>

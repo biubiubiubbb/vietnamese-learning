@@ -531,9 +531,20 @@ app.get('/api/admin/audio', (req: Request, res: Response) => {
   res.json(listAudioGroups({
     status: typeof req.query.status === 'string' ? req.query.status : undefined,
     q: typeof req.query.q === 'string' ? req.query.q : undefined,
+    type: typeof req.query.type === 'string' ? req.query.type : undefined,
     page: Number(req.query.page) || undefined,
     pageSize: Number(req.query.pageSize) || undefined,
   }));
+});
+
+app.post('/api/admin/audio/regenerate', (req: Request, res: Response) => {
+  const text = String(req.body.text ?? '').trim();
+  const voices = (Array.isArray(req.body.voices) ? req.body.voices : [])
+    .filter((voice: unknown) => voice === 'female' || voice === 'male');
+  const uniqueVoices = [...new Set(voices)];
+  if (!text || uniqueVoices.length === 0) return fail(res, 400, '缺少朗读文本或音色');
+  for (const voice of uniqueVoices) regenerate(text, String(voice));
+  res.json({ queued: uniqueVoices.length });
 });
 
 app.post('/api/admin/audio/:id/regenerate', (req: Request, res: Response) => {

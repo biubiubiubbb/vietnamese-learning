@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { api, UnauthorizedError } from './api';
-import { Button } from './ui';
+import { IconButton } from './ui';
 
 type NavIcon =
   | 'overview'
@@ -54,6 +54,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('admin.sideCollapsed') === '1');
 
   useEffect(() => {
     api.get('/api/auth/me')
@@ -69,30 +70,43 @@ export default function AdminLayout() {
     navigate('/admin/login', { replace: true });
   };
 
+  const toggleCollapsed = () => {
+    setCollapsed((value) => {
+      localStorage.setItem('admin.sideCollapsed', value ? '0' : '1');
+      return !value;
+    });
+  };
+
   if (!ready) {
     return <div className="admin-empty" style={{ margin: 40 }}>{error || '正在验证登录状态…'}</div>;
   }
 
   return (
-    <div className="admin-shell">
-      <aside className="admin-side">
+    <div className={`admin-shell${collapsed ? ' side-collapsed' : ''}`}>
+      <aside className={`admin-side${collapsed ? ' collapsed' : ''}`}>
         <div className="admin-brand">
           <span className="admin-brand-mark">越</span>
-          <span>
+          <span className="admin-brand-text">
             <strong>越语学堂</strong>
             <small>内容中后台</small>
           </span>
         </div>
+        <IconButton
+          icon={collapsed ? 'chevron-right' : 'chevron-left'}
+          label={collapsed ? '展开侧栏' : '收起侧栏'}
+          className="admin-side-toggle"
+          onClick={toggleCollapsed}
+        />
         <nav className="admin-nav" aria-label="后台导航">
           {NAV.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end}>
+            <NavLink key={item.to} to={item.to} end={item.end} title={collapsed ? item.label : undefined} aria-label={item.label}>
               <NavIcon name={item.icon} />
-              <span>{item.label}</span>
+              <span className="admin-nav-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
         <div className="admin-side-foot">
-          <Button variant="ghost" onClick={logout}>退出登录</Button>
+          <IconButton icon="logout" label="退出登录" onClick={logout} />
         </div>
       </aside>
       <main className="admin-main">

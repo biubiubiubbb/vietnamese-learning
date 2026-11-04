@@ -1,5 +1,5 @@
 import { db, now } from './db';
-import { collectReadableTexts } from './contentDb';
+import { collectReadableTextMeta, collectReadableTexts } from './contentDb';
 import { synthesize, VOICES } from './tts';
 
 type AudioJob = { text: string; voice: string };
@@ -159,45 +159,84 @@ function mapAudioAsset(row: Row) {
   };
 }
 
-/** 按文本分组分页：同一句/词只占一行，包含女声、男声、人声三列。 */
+function normalizeSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
+
+/** 按文本分组分页：同一句/词只占一行，包含系统音（女声+男声）与人声。 */
 export function listAudioGroups(
-  { status, q, page = 1, pageSize = 20 }: { status?: string; q?: string; page?: number; pageSize?: number } = {},
+  {
+    status,
+    q,
+    type,
+    page = 1,
+    pageSize = 20,
+  }: { status?: string; q?: string; type?: string; page?: number; pageSize?: number } = {},
 ) {
-  const where: string[] = [];
-  const params: (string | number)[] = [];
-  if (q) {
-    where.push('text LIKE ?');
-    params.push(`%${q}%`);
+  const meta = collectReadableTextMeta();
+  const keyword = String(q ?? '').trim();
+  const normalizedKeyword = normalizeSearch(keyword);
+  const rows = db.prepare(
+    `SELECT id, text, voice, mime, source, status, enabled, error, updated_at, length(data) AS bytes
+     FROM audio_assets`,
+  ).all() as Row[];
+
+  const grouped = new Map<string, { assets: Row[]; last: number }>();
+  for (const row of rows) {
+    const group = grouped.get(row.text) ?? { assets: [], last: 0 };
+    group.assets.push(row);
+    group.last = Math.max(group.last, Number(row.updated_at) || 0);
+    grouped.set(row.text, group);
   }
-  if (status === 'disabled') {
-    where.push('enabled = 0');
-  } else if (status) {
-    where.push('status = ? AND enabled = 1');
-    params.push(status);
+
+  const filtered: Array<{
+    text: string;
+    type: 'word' | 'sentence' | 'pronunciation';
+    zh: string;
+    female: ReturnType<typeof mapAudioAsset>;
+    male: ReturnType<typeof mapAudioAsset>;
+    human: ReturnType<typeof mapAudioAsset>;
+    last: number;
+  }> = [];
+
+  for (const [text, group] of grouped) {
+    const info = meta.get(text) ?? { type: 'word' as const, zh: '' };
+    if (type && info.type !== type) continue;
+    if (keyword) {
+      const hitText = normalizeSearch(text).includes(normalizedKeyword);
+      const hitMeaning = info.zh.toLowerCase().includes(keyword.toLowerCase());
+      if (!hitText && !hitMeaning) continue;
+    }
+
+    const byVoice = Object.fromEntries(group.assets.map((row) => [row.voice, mapAudioAsset(row)]));
+    const female = byVoice.female ?? null;
+    const male = byVoice.male ?? null;
+    const human = byVoice.human ?? null;
+    const system = [female, male].filter((asset) => asset !== null);
+    const generating = system.some((asset) => asset.status === 'pending' || asset.status === 'generating');
+    const failed = system.some((asset) => asset.status === 'failed');
+    const missing = !female || !male;
+    const allDisabled = system.length > 0 && system.every((asset) => !asset.enabled);
+
+    if (status === 'generating' && !generating) continue;
+    if (status === 'pending' && !system.some((asset) => asset.status === 'pending')) continue;
+    if (status === 'failed' && (generating || !failed)) continue;
+    if (status === 'missing' && (generating || failed || !missing)) continue;
+    if (status === 'disabled' && (generating || failed || missing || !allDisabled)) continue;
+
+    filtered.push({ text, type: info.type, zh: info.zh, female, male, human, last: group.last });
   }
-  const filter = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const total = db.prepare(`SELECT COUNT(DISTINCT text) AS n FROM audio_assets ${filter}`).get(...params).n;
+
+  filtered.sort((a, b) => b.last - a.last || a.text.localeCompare(b.text));
   const safePage = Math.max(1, Number(page) || 1);
   const safeSize = Math.min(100, Math.max(10, Number(pageSize) || 20));
   const offset = (safePage - 1) * safeSize;
-  const texts = db.prepare(
-    `SELECT text, MAX(updated_at) AS last FROM audio_assets ${filter}
-     GROUP BY text ORDER BY last DESC, text LIMIT ? OFFSET ?`,
-  ).all(...params, safeSize, offset);
+  const items = filtered.slice(offset, offset + safeSize).map(({ last, ...item }) => item);
 
-  const items = texts.map(({ text }) => {
-    const assets = db.prepare(
-      `SELECT id, voice, mime, source, status, enabled, error, updated_at, length(data) AS bytes
-       FROM audio_assets WHERE text = ?`,
-    ).all(text);
-    const byVoice = Object.fromEntries(assets.map((row) => [row.voice, mapAudioAsset(row)]));
-    return {
-      text,
-      female: byVoice.female ?? null,
-      male: byVoice.male ?? null,
-      human: byVoice.human ?? null,
-    };
-  });
-
-  return { items, total, page: safePage, pageSize: safeSize };
+  return { items, total: filtered.length, page: safePage, pageSize: safeSize };
 }

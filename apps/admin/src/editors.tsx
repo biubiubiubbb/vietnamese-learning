@@ -11,7 +11,7 @@ import {
   type SentenceExercise,
   type VocabItem,
 } from '@viet/shared/types';
-import { Button, Field, Select, TextArea, TextInput } from './ui';
+import { Button, Field, Icon, IconButton, Select, TextArea, TextInput } from './ui';
 
 export type VocabOption = Pick<VocabItem, 'id' | 'vi' | 'zh'>;
 
@@ -26,6 +26,9 @@ export function EditableList<T>({
   render,
   addLabel,
   emptyText = '暂无内容',
+  collapsible = false,
+  defaultCollapsed = false,
+  summary,
 }: {
   items: T[];
   onChange: (items: T[]) => void;
@@ -33,39 +36,109 @@ export function EditableList<T>({
   render: (item: T, update: (patch: Partial<T>) => void) => ReactNode;
   addLabel: string;
   emptyText?: string;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  summary?: (item: T, index: number) => ReactNode;
 }) {
+  const [toggled, setToggled] = useState<Set<number>>(new Set());
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
   const setAt = (index: number, patch: Partial<T>) => {
     onChange(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   };
-  const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= items.length) return;
+  const moveTo = (from: number, to: number) => {
+    if (from === to || to < 0 || to >= items.length) return;
     const next = [...items];
-    [next[index], next[target]] = [next[target], next[index]];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     onChange(next);
+    setToggled(new Set());
   };
+  const move = (index: number, direction: -1 | 1) => moveTo(index, index + direction);
   const remove = (index: number) => {
     onChange(items.filter((_, i) => i !== index));
+    setToggled(new Set());
+  };
+  const isOpen = (index: number) => (defaultCollapsed ? toggled.has(index) : !toggled.has(index));
+  const toggle = (index: number) => {
+    setToggled((current) => {
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   };
 
   return (
     <div className="admin-list-editor">
       {items.length === 0 && <div className="admin-empty">{emptyText}</div>}
-      {items.map((item, index) => (
-        <div className="admin-list-item" key={index}>
-          <div className="admin-list-head">
-            <span className="idx">#{index + 1}</span>
-            <div className="admin-list-actions">
-              <Button onClick={() => move(index, -1)}>↑</Button>
-              <Button onClick={() => move(index, 1)}>↓</Button>
-              <Button variant="danger" onClick={() => remove(index)}>删除</Button>
+      {items.map((item, index) => {
+        const open = isOpen(index);
+        return (
+          <div
+            className={`admin-list-item${overIndex === index ? ' admin-drop-target' : ''}${dragIndex === index ? ' admin-dragging' : ''}`}
+            key={index}
+            onDragOver={(event) => {
+              if (dragIndex === null || dragIndex === index) return;
+              event.preventDefault();
+              setOverIndex(index);
+            }}
+            onDragLeave={() => setOverIndex((current) => (current === index ? null : current))}
+            onDrop={(event) => {
+              event.preventDefault();
+              if (dragIndex !== null) moveTo(dragIndex, index);
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+          >
+            <div className="admin-list-head">
+              <span
+                className="admin-drag-handle"
+                draggable
+                aria-label="拖动排序"
+                title="拖动排序"
+                onDragStart={() => setDragIndex(index)}
+                onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+              >
+                <Icon name="drag" />
+              </span>
+              {collapsible && (
+                <button
+                  type="button"
+                  className={`admin-list-collapse${open ? '' : ' closed'}`}
+                  aria-label={open ? '收起' : '展开'}
+                  title={open ? '收起' : '展开'}
+                  onClick={() => toggle(index)}
+                >
+                  <Icon name="chevron-down" />
+                </button>
+              )}
+              <span className="idx">#{index + 1}</span>
+              {summary && <span className="admin-list-title">{summary(item, index)}</span>}
+              <div className="admin-list-actions">
+                <IconButton icon="up" label="上移" onClick={() => move(index, -1)} disabled={index === 0} />
+                <IconButton icon="down" label="下移" onClick={() => move(index, 1)} disabled={index === items.length - 1} />
+                <IconButton icon="trash" label="删除" tone="danger" onClick={() => remove(index)} />
+              </div>
             </div>
+            {open && render(item, (patch) => setAt(index, patch))}
           </div>
-          {render(item, (patch) => setAt(index, patch))}
-        </div>
-      ))}
+        );
+      })}
       <div>
-        <Button onClick={() => onChange([...items, create()])}>+ {addLabel}</Button>
+        <Button
+          onClick={() => {
+            onChange([...items, create()]);
+            setToggled((current) => {
+              const next = new Set(current);
+              next.add(items.length);
+              return next;
+            });
+          }}
+        >
+          <Icon name="plus" />{addLabel}
+        </Button>
       </div>
     </div>
   );
@@ -91,10 +164,10 @@ export function StringListEditor({
             placeholder={placeholder}
             onChange={(next) => onChange(values.map((item, i) => (i === index ? next : item)))}
           />
-          <Button variant="danger" onClick={() => onChange(values.filter((_, i) => i !== index))}>删除</Button>
+          <IconButton icon="trash" label="删除这一条" tone="danger" onClick={() => onChange(values.filter((_, i) => i !== index))} />
         </div>
       ))}
-      <Button onClick={() => onChange([...values, ''])}>+ {addLabel}</Button>
+      <Button onClick={() => onChange([...values, ''])}><Icon name="plus" />{addLabel}</Button>
     </div>
   );
 }
@@ -371,18 +444,44 @@ export function LessonExerciseEditor({
   );
 }
 
+function normalizeSentence(value: string) {
+  return value.normalize('NFC').replace(/[.,!?;:…]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** 词块拼接与句子的实时一致性检查，供编辑器和保存校验复用。 */
+export function checkChunkMatch(chunks: SentenceChunk[], sentence: string): { ok: boolean; message: string } {
+  const filled = chunks.map((chunk) => chunk.vi.trim()).filter(Boolean);
+  if (filled.length === 0) return { ok: false, message: '还没有词块，至少添加一个' };
+  if (!sentence.trim()) return { ok: false, message: '先填写句子越南语' };
+  const joined = normalizeSentence(filled.join(' '));
+  const target = normalizeSentence(sentence);
+  if (joined === target) return { ok: true, message: '词块拼接与句子一致' };
+  let index = 0;
+  while (index < Math.min(joined.length, target.length) && joined[index] === target[index]) index += 1;
+  return { ok: false, message: `拼接结果与句子从第 ${index + 1} 个字符起不一致` };
+}
+
 export function SentenceChunksEditor({
   value,
   onChange,
   vocabOptions,
+  sentence,
 }: {
   value: SentenceChunk[];
   onChange: (value: SentenceChunk[]) => void;
   vocabOptions: VocabOption[];
+  sentence?: string;
 }) {
   const preview = value.map((chunk) => chunk.vi).filter(Boolean).join(' ');
+  const match = sentence === undefined ? null : checkChunkMatch(value, sentence);
   return (
     <>
+      {match && (
+        <div className={`admin-match ${match.ok ? 'ok' : 'err'}`}>
+          <Icon name={match.ok ? 'check' : 'alert'} />
+          <span>{match.message}</span>
+        </div>
+      )}
       <EditableList
         items={value}
         onChange={onChange}

@@ -7,9 +7,13 @@ import {
   Banner,
   Button,
   Card,
+  ConfirmDialog,
   Field,
+  Icon,
+  IconButton,
   Loading,
   Modal,
+  MoreMenu,
   Select,
   TextInput,
   useNotice,
@@ -24,6 +28,8 @@ const emptyLesson = (unitId: string): Lesson => ({
   grammar: [], dialogues: [], exercises: [],
 });
 
+type DeleteTarget = { kind: 'units' | 'lessons'; id: string; title: string };
+
 export default function AdminUnits() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -33,6 +39,12 @@ export default function AdminUnits() {
   const [unitForm, setUnitForm] = useState<Unit | null>(null);
   const [lessonForm, setLessonForm] = useState<Lesson | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [dragUnit, setDragUnit] = useState<string | null>(null);
+  const [dragLesson, setDragLesson] = useState<{ unitId: string; id: string } | null>(null);
+  const [dropUnit, setDropUnit] = useState<string | null>(null);
+  const [dropLesson, setDropLesson] = useState<string | null>(null);
   const notice = useNotice();
 
   const load = async () => {
@@ -110,14 +122,18 @@ export default function AdminUnits() {
     }
   };
 
-  const remove = async (kind: 'units' | 'lessons', id: string) => {
-    if (!window.confirm(`确定删除这个${kind === 'units' ? '单元' : '课程'}吗？将进入回收站。`)) return;
+  const remove = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.del(`/api/admin/${kind}/${id}`);
+      await api.del(`/api/admin/${deleteTarget.kind}/${deleteTarget.id}`);
       notice.ok('已移入回收站');
+      setDeleteTarget(null);
       await load();
     } catch (e) {
       notice.err((e as Error).message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -144,10 +160,48 @@ export default function AdminUnits() {
     await load();
   };
 
+  const dropUnitOn = async (targetId: string) => {
+    if (!dragUnit || dragUnit === targetId) return;
+    const from = units.findIndex((u) => u.id === dragUnit);
+    const to = units.findIndex((u) => u.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...units];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setUnits(next);
+    setDragUnit(null);
+    setDropUnit(null);
+    try {
+      await api.post('/api/admin/units/reorder', { ids: next.map((u) => u.id) });
+    } finally {
+      await load();
+    }
+  };
+
+  const dropLessonOn = async (unitId: string, targetId: string) => {
+    if (!dragLesson || dragLesson.unitId !== unitId || dragLesson.id === targetId) return;
+    const list = lessons.filter((l) => l.unitId === unitId);
+    const from = list.findIndex((l) => l.id === dragLesson.id);
+    const to = list.findIndex((l) => l.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setLessons([...lessons.filter((l) => l.unitId !== unitId), ...next]);
+    setDragLesson(null);
+    setDropLesson(null);
+    try {
+      await api.post('/api/admin/lessons/reorder', { ids: next.map((l) => l.id) });
+    } finally {
+      await load();
+    }
+  };
+
   return (
     <AdminPage
       title="课程结构"
-      actions={<Button variant="primary" onClick={() => openUnit()}>新增单元</Button>}
+      subtitle="拖动手柄可排序，单元内课程只在本单元内移动。"
+      actions={<Button variant="primary" onClick={() => openUnit()}><Icon name="plus" />新增单元</Button>}
     >
       {notice.notice && <Banner tone={notice.notice.tone}>{notice.notice.text}</Banner>}
       {error && <Banner tone="err">{error}</Banner>}
@@ -156,50 +210,134 @@ export default function AdminUnits() {
           {units.map((unit) => {
             const unitLessons = lessons.filter((l) => l.unitId === unit.id);
             return (
-              <Card key={unit.id}>
-                <div className="admin-page-head" style={{ marginBottom: 10 }}>
-                  <div>
-                    <h2>{unit.order}. {unit.title} <span className="admin-status admin-status-ready">{unit.level}</span></h2>
-                    <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{unit.subtitle} · {unit.id}</p>
+              <div
+                key={unit.id}
+                className={`${dropUnit === unit.id ? 'admin-drop-target' : ''}${dragUnit === unit.id ? ' admin-dragging' : ''}`}
+                onDragOver={(event) => {
+                  if (!dragUnit) return;
+                  event.preventDefault();
+                  setDropUnit(unit.id);
+                }}
+                onDragLeave={() => setDropUnit((current) => (current === unit.id ? null : current))}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  dropUnitOn(unit.id);
+                }}
+              >
+                <Card>
+                  <div className="admin-page-head" style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <span
+                        className="admin-drag-handle"
+                        draggable
+                        aria-label="拖动排序单元"
+                        title="拖动排序单元"
+                        onDragStart={() => setDragUnit(unit.id)}
+                        onDragEnd={() => { setDragUnit(null); setDropUnit(null); }}
+                      >
+                        <Icon name="drag" />
+                      </span>
+                      <div>
+                        <h2>{unit.order}. {unit.title} <span className="admin-status admin-status-ready">{unit.level}</span></h2>
+                        <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{unit.subtitle} · {unit.id}</p>
+                      </div>
+                    </div>
+                    <div className="admin-row-actions">
+                      <IconButton icon="up" label="上移单元" onClick={() => moveUnit(unit.id, -1)} disabled={units[0]?.id === unit.id} />
+                      <IconButton icon="down" label="下移单元" onClick={() => moveUnit(unit.id, 1)} disabled={units[units.length - 1]?.id === unit.id} />
+                      <IconButton icon="edit" label="编辑单元" tone="sky" onClick={() => openUnit(unit)} />
+                      <IconButton icon="plus" label="新增课程" tone="green" onClick={() => openLesson(unit.id)} />
+                      <MoreMenu
+                        items={[
+                          {
+                            label: '删除单元',
+                            icon: 'trash',
+                            tone: 'danger',
+                            onSelect: () => setDeleteTarget({ kind: 'units', id: unit.id, title: unit.title }),
+                          },
+                        ]}
+                      />
+                    </div>
                   </div>
-                  <div className="admin-row-actions">
-                    <Button onClick={() => moveUnit(unit.id, -1)}>上移</Button>
-                    <Button onClick={() => moveUnit(unit.id, 1)}>下移</Button>
-                    <Button onClick={() => openUnit(unit)}>编辑单元</Button>
-                    <Button onClick={() => openLesson(unit.id)}>新增课程</Button>
-                    <Button variant="danger" onClick={() => remove('units', unit.id)}>删除</Button>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead><tr><th>顺序</th><th>ID</th><th>课程</th><th>词汇</th><th>语法</th><th>对话</th><th>练习</th><th>操作</th></tr></thead>
+                      <tbody>
+                        {unitLessons.map((lesson) => (
+                          <tr
+                            key={lesson.id}
+                            className={`${dropLesson === lesson.id ? 'admin-drop-target' : ''}${dragLesson?.id === lesson.id ? ' admin-dragging' : ''}`}
+                            onDragOver={(event) => {
+                              if (!dragLesson || dragLesson.unitId !== unit.id) return;
+                              event.preventDefault();
+                              setDropLesson(lesson.id);
+                            }}
+                            onDragLeave={() => setDropLesson((current) => (current === lesson.id ? null : current))}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              dropLessonOn(unit.id, lesson.id);
+                            }}
+                          >
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span
+                                  className="admin-drag-handle"
+                                  draggable
+                                  aria-label="拖动排序课程"
+                                  title="拖动排序课程"
+                                  onDragStart={() => setDragLesson({ unitId: unit.id, id: lesson.id })}
+                                  onDragEnd={() => { setDragLesson(null); setDropLesson(null); }}
+                                >
+                                  <Icon name="drag" />
+                                </span>
+                                {lesson.order}
+                              </div>
+                            </td>
+                            <td>{lesson.id}</td>
+                            <td><strong>{lesson.title}</strong></td>
+                            <td>
+                              <span className={`admin-count-cell${lesson.vocabIds.length === 0 ? ' zero' : ''}`} title={`关联词汇 ${lesson.vocabIds.length} 个`}>
+                                <Icon name="letter" />{lesson.vocabIds.length}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`admin-count-cell${lesson.grammar.length === 0 ? ' zero' : ''}`} title={`语法点 ${lesson.grammar.length} 个`}>
+                                <Icon name="rule" />{lesson.grammar.length}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`admin-count-cell${lesson.dialogues.length === 0 ? ' zero' : ''}`} title={`对话 ${lesson.dialogues.length} 组`}>
+                                <Icon name="pair" />{lesson.dialogues.length}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`admin-count-cell${lesson.exercises.length === 0 ? ' zero' : ''}`} title={`练习 ${lesson.exercises.length} 道`}>
+                                <Icon name="check" />{lesson.exercises.length}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="admin-row-actions">
+                                <IconButton icon="up" label="上移课程" onClick={() => moveLesson(unit.id, lesson.id, -1)} disabled={unitLessons[0]?.id === lesson.id} />
+                                <IconButton icon="down" label="下移课程" onClick={() => moveLesson(unit.id, lesson.id, 1)} disabled={unitLessons[unitLessons.length - 1]?.id === lesson.id} />
+                                <IconButton icon="edit" label="编辑课程" tone="sky" onClick={() => openLesson(unit.id, lesson)} />
+                                <IconButton
+                                  icon="trash"
+                                  label="删除课程"
+                                  tone="danger"
+                                  onClick={() => setDeleteTarget({ kind: 'lessons', id: lesson.id, title: lesson.title })}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {unitLessons.length === 0 && (
+                          <tr><td colSpan={8}><div className="admin-empty">这个单元还没有课程</div></td></tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead><tr><th>顺序</th><th>ID</th><th>课程</th><th>词汇</th><th>语法</th><th>对话</th><th>练习</th><th>操作</th></tr></thead>
-                    <tbody>
-                      {unitLessons.map((lesson) => (
-                        <tr key={lesson.id}>
-                          <td>{lesson.order}</td>
-                          <td>{lesson.id}</td>
-                          <td><strong>{lesson.title}</strong></td>
-                          <td>{lesson.vocabIds.length}</td>
-                          <td>{lesson.grammar.length}</td>
-                          <td>{lesson.dialogues.length}</td>
-                          <td>{lesson.exercises.length}</td>
-                          <td>
-                            <div className="admin-row-actions">
-                              <Button onClick={() => moveLesson(unit.id, lesson.id, -1)}>↑</Button>
-                              <Button onClick={() => moveLesson(unit.id, lesson.id, 1)}>↓</Button>
-                              <Button onClick={() => openLesson(unit.id, lesson)}>编辑</Button>
-                              <Button variant="danger" onClick={() => remove('lessons', lesson.id)}>删除</Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {unitLessons.length === 0 && (
-                        <tr><td colSpan={8}><div className="admin-empty">这个单元还没有课程</div></td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
+                </Card>
+              </div>
             );
           })}
         </div>
@@ -212,7 +350,7 @@ export default function AdminUnits() {
           footer={
             <>
               <Button onClick={() => setUnitForm(null)}>取消</Button>
-              <Button variant="primary" onClick={saveUnit} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+              <Button variant="primary" onClick={saveUnit} loading={saving}>保存</Button>
             </>
           }
         >
@@ -238,7 +376,7 @@ export default function AdminUnits() {
           footer={
             <>
               <Button onClick={() => setLessonForm(null)}>取消</Button>
-              <Button variant="primary" onClick={saveLesson} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+              <Button variant="primary" onClick={saveLesson} loading={saving}>保存</Button>
             </>
           }
         >
@@ -270,6 +408,19 @@ export default function AdminUnits() {
             <LessonExerciseEditor value={lessonForm.exercises} onChange={(exercises) => setLessonForm({ ...lessonForm, exercises })} />
           </Field>
         </Modal>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title={deleteTarget.kind === 'units' ? '删除单元' : '删除课程'}
+          confirmLabel="移入回收站"
+          onConfirm={remove}
+          onClose={() => setDeleteTarget(null)}
+          busy={deleting}
+        >
+          <p>将删除 <strong>{deleteTarget.title}</strong>（{deleteTarget.id}）。</p>
+          <p className="muted">内容会移入回收站，可随时恢复。</p>
+        </ConfirmDialog>
       )}
     </AdminPage>
   );
