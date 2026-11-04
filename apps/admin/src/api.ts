@@ -36,7 +36,11 @@ export const api = {
     request<T>(url, { method: 'PUT', body: JSON.stringify(body) }),
   patch: <T>(url: string, body: unknown) =>
     request<T>(url, { method: 'PATCH', body: JSON.stringify(body) }),
-  del: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
+  del: <T>(url: string, body?: unknown) =>
+    request<T>(url, {
+      method: 'DELETE',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
   upload: <T>(url: string, form: FormData) =>
     request<T>(url, { method: 'POST', body: form }),
 };

@@ -114,9 +114,59 @@ db.exec(`
     value TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'normal',
+    created_at INTEGER NOT NULL,
+    last_login_at INTEGER,
+    last_study_at INTEGER,
+    failed_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until INTEGER
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_nocase ON users (username COLLATE NOCASE);
+
+  CREATE TABLE IF NOT EXISTS user_sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_lesson_completions (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lesson_id TEXT NOT NULL,
+    completed_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, lesson_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS user_scores (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lesson_id TEXT NOT NULL,
+    correct INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, lesson_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS user_cards (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    box INTEGER NOT NULL,
+    due INTEGER NOT NULL,
+    PRIMARY KEY (user_id, kind, item_id)
+  );
+
   CREATE INDEX IF NOT EXISTS idx_lessons_unit ON lessons (unit_id, sort_order);
   CREATE INDEX IF NOT EXISTS idx_sentences_lesson ON sentences (lesson_id, sort_order);
   CREATE INDEX IF NOT EXISTS idx_audio_status ON audio_assets (status, enabled);
+  CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions (user_id);
+  CREATE INDEX IF NOT EXISTS idx_user_completions_user ON user_lesson_completions (user_id);
+  CREATE INDEX IF NOT EXISTS idx_user_scores_user ON user_scores (user_id);
+  CREATE INDEX IF NOT EXISTS idx_user_cards_user ON user_cards (user_id, kind, due);
 `);
 
 export function jsonParse<T>(value: unknown, fallback: T): T {

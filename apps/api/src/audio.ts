@@ -9,7 +9,7 @@ const VOICE_KEYS = Object.keys(VOICES);
 const queue: AudioJob[] = [];
 const queued = new Set<string>();
 let running = 0;
-const CONCURRENCY = 2;
+const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY) || 4;
 
 function keyOf(text: string, voice: string) {
   return `${voice}:${text}`;
@@ -24,12 +24,15 @@ function enqueue(text: string, voice: string) {
 }
 
 async function synthesizeWithRetry(text: string, voice: string) {
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await synthesize(text, voice);
     } catch (error) {
-      if (attempt === 3) throw error;
-      await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+      if (attempt === maxAttempts) throw error;
+      // Edge 语音服务偶发连接超时，指数退避后重试
+      const delay = Math.min(20_000, 2_000 * 2 ** (attempt - 1)) + Math.random() * 1_000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
   throw new Error('音频生成失败');

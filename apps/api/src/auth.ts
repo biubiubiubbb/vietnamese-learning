@@ -5,19 +5,19 @@ import { db, now } from './db';
 const SESSION_COOKIE = 'admin_session';
 const SESSION_DAYS = 7;
 
-function hashPassword(password: string, salt = crypto.randomBytes(16).toString('hex')) {
+export function hashPassword(password: string, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password: string, stored: string) {
+export function verifyPassword(password: string, stored: string) {
   const [salt, hash] = String(stored).split(':');
   if (!salt || !hash) return false;
   const candidate = crypto.scryptSync(password, salt, 64).toString('hex');
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(candidate, 'hex'));
 }
 
-function cookieAttrs(maxAge: number) {
+export function cookieAttrs(maxAge: number) {
   const sameSite = process.env.COOKIE_SAMESITE ?? 'Lax';
   const secure = process.env.COOKIE_SECURE === '1' ? '; Secure' : '';
   return `HttpOnly; SameSite=${sameSite}; Path=/; Max-Age=${maxAge}${secure}`;

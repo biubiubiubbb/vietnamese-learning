@@ -1323,3 +1323,30 @@ select {
     font-size: 25px;
   }
 }
+
+/* ---------- 客户管理 ---------- */
+
+.admin-meter {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(43, 43, 43, 0.08);
+  overflow: hidden;
+}
+
+.admin-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7cb342, #4fc3f7);
+  transition: width 320ms var(--a-ease);
+}
+
+.admin-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 12.5px;
+}
+

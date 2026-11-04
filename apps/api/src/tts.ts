@@ -36,7 +36,7 @@ export async function synthesize(text: string, voice: string): Promise<Buffer> {
   if (!trimmed) throw new Error('朗读文本为空');
 
   const tts = new MsEdgeTTS({
-    connectionTimeoutMs: 15_000,
+    connectionTimeoutMs: 30_000,
     synthesisTimeoutMs: 90_000,
     agent: PROXY_AGENT as unknown as import('http').Agent,
   });
