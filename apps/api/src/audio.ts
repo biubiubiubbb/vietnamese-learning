@@ -23,10 +23,22 @@ function enqueue(text: string, voice: string) {
   pump();
 }
 
+async function synthesizeWithRetry(text: string, voice: string) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await synthesize(text, voice);
+    } catch (error) {
+      if (attempt === 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    }
+  }
+  throw new Error('音频生成失败');
+}
+
 async function runJob(job: AudioJob) {
   const { text, voice } = job;
   try {
-    const buffer = await synthesize(text, voice);
+    const buffer = await synthesizeWithRetry(text, voice);
     db.prepare(
       `UPDATE audio_assets
        SET data = ?, mime = 'audio/mpeg', source = CASE WHEN source = 'recorded' THEN source ELSE 'generated' END,

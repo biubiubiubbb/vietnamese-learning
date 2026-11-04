@@ -1,4 +1,13 @@
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+/** 沙箱/内网环境需要通过 HTTP 代理访问 Edge 语音服务，msedge-tts 不会自动读取代理环境变量。 */
+const PROXY_URL =
+  process.env.HTTPS_PROXY ??
+  process.env.https_proxy ??
+  process.env.HTTP_PROXY ??
+  process.env.http_proxy;
+const PROXY_AGENT = PROXY_URL ? new HttpsProxyAgent(PROXY_URL) : undefined;
 
 export const VOICES: Record<string, string> = {
   female: 'vi-VN-HoaiMyNeural',
@@ -29,6 +38,7 @@ export async function synthesize(text: string, voice: string): Promise<Buffer> {
   const tts = new MsEdgeTTS({
     connectionTimeoutMs: 15_000,
     synthesisTimeoutMs: 90_000,
+    agent: PROXY_AGENT as unknown as import('http').Agent,
   });
   await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
   const { audioStream } = await tts.toStream(escapeXml(trimmed));
