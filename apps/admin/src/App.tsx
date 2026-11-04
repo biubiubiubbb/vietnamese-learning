@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, RouterProvider, Link } from 'react-router-dom';
+import { createHashRouter, Navigate, RouterProvider, Link } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
@@ -21,7 +21,8 @@ function NotFound() {
   );
 }
 
-const router = createBrowserRouter([
+// 使用 hash 路由，静态部署（如 GitHub Pages 子目录）时无需服务端回退配置
+const router = createHashRouter([
   { path: '/', element: <Navigate to="/admin" replace /> },
   { path: '/admin/login', element: <AdminLogin /> },
   {

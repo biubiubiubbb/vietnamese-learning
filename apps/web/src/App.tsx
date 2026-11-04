@@ -29,6 +29,9 @@ function NotFound() {
   );
 }
 
+// 子路径部署时（如 GitHub Pages）让路由与构建 base 保持一致
+const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
 const router = createBrowserRouter([
   {
     element: <Layout />,
@@ -76,7 +79,7 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFound /> },
     ],
   },
-]);
+], { basename: BASENAME });
 
 export default function App() {
   const [contentReady, setContentReady] = useState(false);

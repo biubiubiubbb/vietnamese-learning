@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
-  base: '/admin/',
+  base: process.env.VITE_BASE ?? '/admin/',
   plugins: [react()],
   resolve: {
     alias: {
