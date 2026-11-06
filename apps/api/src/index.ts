@@ -39,6 +39,9 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:5173,http://
   .map((origin) => origin.trim())
   .filter(Boolean);
 const app = express();
+// 部署在反向代理（Railway / Nginx 等）之后时，必须信任代理转发的 X-Forwarded-For，
+// 否则 req.ip 恒为代理地址，注册限流会变成所有用户共享的全局额度。
+app.set('trust proxy', process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 1);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
