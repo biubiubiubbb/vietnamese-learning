@@ -41,7 +41,18 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:5173,http://
 const app = express();
 // 部署在反向代理（Railway / Nginx 等）之后时，必须信任代理转发的 X-Forwarded-For，
 // 否则 req.ip 恒为代理地址，注册限流会变成所有用户共享的全局额度。
-app.set('trust proxy', process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 1);
+// TRUST_PROXY 支持 true/false、跳数（如 1）以及 Express 的网段/关键字写法（如 loopback）。
+// 不能直接用 Number() 转换：Number('true') 是 NaN，会让 trust proxy 静默失效，
+// 所有客户端又退回共享的代理 IP，重新触发「第 11 个用户被 429」的问题。
+function resolveTrustProxy(raw: string | undefined): number | boolean | string {
+  const value = raw?.trim();
+  if (!value) return 1;
+  if (value === 'true') return 1;
+  if (value === 'false') return false;
+  if (/^\d+$/.test(value)) return Number(value);
+  return value;
+}
+app.set('trust proxy', resolveTrustProxy(process.env.TRUST_PROXY));
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
