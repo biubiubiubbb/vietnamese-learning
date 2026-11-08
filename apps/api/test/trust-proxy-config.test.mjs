@@ -68,3 +68,12 @@ test('TRUST_PROXY=true 时注册限流仍按真实客户端 IP 计数', async ()
     assert.equal(status, 201, `第 ${i + 1} 个不同 IP 的注册被限流拦截`);
   }
 });
+
+// TRUST_PROXY=true 曾被解析成跳数 1。多级代理链路（X-Forwarded-For: 客户端, CDN/边缘代理）
+// 下 req.ip 只会取到最近一跳代理的地址，所有用户再次共享每小时 10 次的注册额度。
+test('TRUST_PROXY=true 时多级代理链路仍按真实客户端 IP 计数', async () => {
+  for (let i = 0; i < 11; i += 1) {
+    const status = await register(`tpb${i}proxied`, `198.51.100.${i + 1}, 10.0.0.10`);
+    assert.equal(status, 201, `第 ${i + 1} 个不同客户端（两级代理）的注册被限流拦截`);
+  }
+});

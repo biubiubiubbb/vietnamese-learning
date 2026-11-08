@@ -44,10 +44,12 @@ const app = express();
 // TRUST_PROXY 支持 true/false、跳数（如 1）以及 Express 的网段/关键字写法（如 loopback）。
 // 不能直接用 Number() 转换：Number('true') 是 NaN，会让 trust proxy 静默失效，
 // 所有客户端又退回共享的代理 IP，重新触发「第 11 个用户被 429」的问题。
+// 'true' 必须还原成布尔值 true（信任整条代理链）：若映射成跳数 1，多级代理
+// （如 CDN + 边缘代理）下 req.ip 仍会退化为最近一跳代理的地址，限流额度继续被共享。
 function resolveTrustProxy(raw: string | undefined): number | boolean | string {
   const value = raw?.trim();
   if (!value) return 1;
-  if (value === 'true') return 1;
+  if (value === 'true') return true;
   if (value === 'false') return false;
   if (/^\d+$/.test(value)) return Number(value);
   return value;
