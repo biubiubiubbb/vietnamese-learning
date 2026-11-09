@@ -55,11 +55,11 @@ function WordReview({ deck, onDone }: { deck: VocabItem[]; onDone: () => void })
       <div
         className="card"
         style={{ textAlign: 'center', padding: 48, cursor: 'pointer', minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}
-        onClick={() => speakRef.current?.toggle()}
+        onClick={() => setFlipped((value) => !value)}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setFlipped(!flipped); } }}
-        aria-label={`朗读词条 ${v.vi}`}
+        aria-label={flipped ? '隐藏中文释义' : '显示中文释义'}
       >
         <div className="flex" style={{ justifyContent: 'center', gap: 12 }}>
           <span className="vi" style={{ fontWeight: 800, fontSize: 34 }}>{v.vi}</span>

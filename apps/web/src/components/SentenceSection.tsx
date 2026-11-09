@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { SENTENCES, sentenceById, sentencesOfLesson } from '../content/sentences';
 import { vocabById } from '../content/vocab';
@@ -31,18 +31,34 @@ function ChunkLegend() {
   );
 }
 
+/** 卡片内的按钮、链接、输入框等控件不参与“点卡片切换中文”。 */
+function isControlClick(target: EventTarget | null) {
+  return target instanceof HTMLElement && Boolean(target.closest('button, a, input, select, textarea'));
+}
+
 function SentenceCard({ s, showZh }: { s: Sentence; showZh: boolean }) {
   const { state } = useProgress();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  const [revealed, setRevealed] = useState(false);
+  // null 表示跟随全局设置；点击卡片后由本卡单独覆盖
+  const [override, setOverride] = useState<boolean | null>(null);
   const card = state.sentenceCards[s.id];
-  const zhVisible = showZh || revealed;
+  const zhVisible = override ?? showZh;
   const chunk = selected === null ? null : s.chunks[selected];
   const hanViet = chunk?.vocabId ? vocabById.get(chunk.vocabId)?.hanViet : undefined;
 
+  // 顶部“显示/隐藏中文对照”变化时，让所有卡片跟随全局设置
+  useEffect(() => { setOverride(null); }, [showZh]);
+
+  const toggleZh = () => setOverride((value) => !(value ?? showZh));
+
+  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (isControlClick(event.target)) return;
+    toggleZh();
+  };
+
   return (
-    <div className="card sentence-card">
+    <div className="card sentence-card" style={{ cursor: 'pointer' }} onClick={handleCardClick}>
       <div className="flex spread gap8 wrap mb8">
         <div className="flex gap8">
           <span className="badge-num" style={{ minWidth: 28, height: 28, fontSize: 12 }}>{s.order}</span>
@@ -59,15 +75,14 @@ function SentenceCard({ s, showZh }: { s: Sentence; showZh: boolean }) {
 
       <div
         className="flex gap8 wrap"
-        style={{ alignItems: 'flex-start', cursor: 'pointer' }}
+        style={{ alignItems: 'flex-start' }}
         role="button"
         tabIndex={0}
         aria-label={zhVisible ? '隐藏中文释义' : '显示中文释义'}
-        onClick={() => setRevealed((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();
-            setRevealed((v) => !v);
+            toggleZh();
           }
         }}
       >
@@ -174,10 +189,10 @@ export function SentenceReview({ sentences, scope }: { sentences: Sentence[]; sc
       <div
         className="card"
         style={{ textAlign: 'center', padding: 40, cursor: 'pointer', minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}
-        onClick={() => speakRef.current?.toggle()}
+        onClick={() => setFlipped((value) => !value)}
         role="button"
         tabIndex={0}
-        aria-label={`朗读句子 ${s.vi}`}
+        aria-label={flipped ? '隐藏中文释义' : '显示中文释义'}
         onKeyDown={(e) => {
           if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();

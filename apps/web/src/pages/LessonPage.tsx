@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, type MouseEvent } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { lessonById, unitOfLesson, getNextLesson, getPrevLesson } from '../content/curriculum';
 import { vocabById } from '../content/vocab';
@@ -11,6 +11,11 @@ import SentenceSection from '../components/SentenceSection';
 
 /** 词汇默认只展示前 18 个，超出后折叠，避免上百个词把页面拉得过长 */
 const VOCAB_PREVIEW = 18;
+
+/** 卡片内的按钮、链接、输入框等控件不参与“点卡片切换中文”。 */
+function isControlClick(target: EventTarget | null) {
+  return target instanceof HTMLElement && Boolean(target.closest('button, a, input, select, textarea'));
+}
 
 function VocabRow({ v }: { v: VocabItem }) {
   const speakRef = useRef<SpeakButtonHandle>(null);
@@ -172,7 +177,14 @@ export default function LessonPage() {
             </button>
           </div>
           {lesson.dialogues.map((d) => (
-            <div key={d.id} className="card mb16">
+            <div
+              key={d.id}
+              className="card mb16"
+              style={{ cursor: 'pointer' }}
+              onClick={(event: MouseEvent<HTMLDivElement>) => {
+                if (!isControlClick(event.target)) setShowZh((value) => !value);
+              }}
+            >
               <div className="flex spread mb16">
                 <strong>{d.title}</strong>
                 <button
